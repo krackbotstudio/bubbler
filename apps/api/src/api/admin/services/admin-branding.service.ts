@@ -39,8 +39,8 @@ export class AdminBrandingService {
     const fileName = `${Date.now()}-${safeName}`;
     const pathKey = `branding/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const url = `/api/assets/branding/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/branding/${fileName}`;
     await this.brandingRepo.setLogoUrl(url);
     return this.get();
   }
@@ -50,8 +50,8 @@ export class AdminBrandingService {
     const fileName = `${Date.now()}-${safeName}`;
     const pathKey = `branding/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const url = `/api/assets/branding/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/branding/${fileName}`;
     await this.brandingRepo.setUpiQrUrl(url);
     return this.get();
   }
@@ -61,8 +61,8 @@ export class AdminBrandingService {
     const fileName = `welcome-bg-${Date.now()}-${safeName}`;
     const pathKey = `branding/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const url = `/api/assets/branding/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/branding/${fileName}`;
     await this.brandingRepo.setWelcomeBackgroundUrl(url);
     return this.get();
   }

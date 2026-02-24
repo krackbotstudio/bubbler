@@ -78,6 +78,8 @@ export async function purchaseSubscription(
     planId: params.planId,
     branchId,
     addressId: params.addressId,
+    addressLabel: address.label?.trim() || null,
+    addressLine: address.addressLine?.trim() || null,
     validityStartDate,
     expiryDate: validTill,
     remainingPickups: plan.maxPickups,

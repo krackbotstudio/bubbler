@@ -131,6 +131,8 @@ export async function createOrder(
   let effectiveAddressId = params.addressId;
   let effectivePincode = params.pincode;
   let branchId: string | null = null;
+  /** Snapshot of address at order time (label + addressLine) so it doesn't change if user edits/deletes address. */
+  let addressSnapshot: { label: string | null; addressLine: string } | null = null;
 
   if (subscriptionForAddress?.addressId && subscriptionForAddress?.branchId) {
     const subAddress = await addressesRepo.getByIdForUser(subscriptionForAddress.addressId, params.userId);
@@ -140,6 +142,12 @@ export async function createOrder(
     effectiveAddressId = subscriptionForAddress.addressId;
     effectivePincode = subAddress.pincode;
     branchId = subscriptionForAddress.branchId;
+    addressSnapshot = { label: subAddress.label?.trim() ?? null, addressLine: subAddress.addressLine?.trim() ?? '' };
+  } else {
+    const address = await addressesRepo.getByIdForUser(effectiveAddressId, params.userId);
+    if (address) {
+      addressSnapshot = { label: address.label?.trim() ?? null, addressLine: address.addressLine?.trim() ?? '' };
+    }
   }
 
   if (branchId === null) {
@@ -206,6 +214,8 @@ export async function createOrder(
     serviceType: primaryServiceType,
     serviceTypes,
     addressId: effectiveAddressId,
+    addressLabel: addressSnapshot?.label ?? null,
+    addressLine: addressSnapshot?.addressLine ?? null,
     pincode: effectivePincode,
     pickupDate: params.pickupDate,
     timeWindow: params.timeWindow,

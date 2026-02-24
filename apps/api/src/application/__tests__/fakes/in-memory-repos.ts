@@ -53,6 +53,8 @@ export function createFakeOrdersRepo(initial: OrderRecord[] = []): OrdersRepo & 
         serviceType: data.serviceType as ServiceType,
         serviceTypes: serviceTypes as OrderRecord['serviceTypes'],
         addressId: data.addressId,
+        addressLabel: data.addressLabel ?? null,
+        addressLine: data.addressLine ?? null,
         pincode: data.pincode,
         pickupDate: data.pickupDate,
         timeWindow: data.timeWindow,

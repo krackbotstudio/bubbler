@@ -11,18 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorDisplay } from '@/components/shared/ErrorDisplay';
 import { OrderStatusBadge } from '@/components/shared/StatusBadge';
-import { formatMoney, formatDate } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 import type { AdminOrderListRow, OrderStatus } from '@/types';
-import { Calendar, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
 const HIDE_FROM_PICKUPS: OrderStatus[] = ['PICKED_UP', 'DELIVERED', 'CANCELLED'];
 
@@ -63,7 +53,6 @@ export default function DashboardPage() {
   const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>(() =>
     isBranchHead && user?.branchId ? [user.branchId] : []
   );
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   useEffect(() => {
     if (isBranchHead && user?.branchId) setSelectedBranchIds([user.branchId]);
@@ -207,98 +196,18 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Scheduled Pickups (Today → 1 week, missed on top) */}
+      {/* Scheduled Pickups – calendar view only */}
       <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+        <CardHeader>
           <CardTitle>Scheduled Pickups</CardTitle>
-          <div className="flex items-center gap-1">
-            <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="mr-1 h-4 w-4" />
-              List
-            </Button>
-            <Button
-              variant={viewMode === 'calendar' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('calendar')}
-            >
-              <Calendar className="mr-1 h-4 w-4" />
-              Calendar
-            </Button>
-          </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Next 1 week pickups by date chosen by customer. Missed (past pickups not picked up) appear at top. New confirmed bookings appear here as soon as the customer confirms. List refreshes every 30s. Picked up or cancelled orders are hidden.
+            Next 1 week pickups by date chosen by customer. Missed (past pickups not picked up) appear at top. New confirmed bookings appear here as soon as the customer confirms. Refreshes every 30s. Picked up or cancelled orders are hidden.
           </p>
           {ordersLoading ? (
             <Skeleton className="h-48 w-full" />
-          ) : viewMode === 'list' ? (
-            <>
-              {scheduledPickups.list.length === 0 ? (
-                <p className="text-muted-foreground text-sm py-6 text-center">No scheduled pickups in this range.</p>
-              ) : (
-                <div className="space-y-6">
-                  {scheduledPickups.orderedKeys.map((dateKey) => {
-                    const rows = scheduledPickups.byDate.get(dateKey)!;
-                    const isMissed = dateKey < todayKey;
-                    const dayLabel = getDayLabel(dateKey, todayKey);
-                    return (
-                      <div key={dateKey}>
-                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                          {dayLabel}
-                          <span className="text-muted-foreground font-normal">({dateKey})</span>
-                          {isMissed && (
-                            <span className="text-destructive text-xs font-medium">Missed / Not picked up</span>
-                          )}
-                        </h3>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Order</TableHead>
-                              <TableHead>Customer</TableHead>
-                              <TableHead>Time</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Service</TableHead>
-                              <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {rows.map((row) => {
-                              const isSub = isSubscriptionOrder(row);
-                              const rowBg = isSub
-                                ? 'bg-sky-50 dark:bg-sky-950/30'
-                                : 'bg-fuchsia-50 dark:bg-fuchsia-950/30';
-                              return (
-                              <TableRow
-                                key={row.id}
-                                className={`cursor-pointer ${rowBg}`}
-                                onClick={() => router.push(`/orders/${row.id}`)}
-                              >
-                                <TableCell className="font-mono text-xs">{row.id.slice(0, 8)}…</TableCell>
-                                <TableCell className="max-w-[140px] truncate">{row.customerName ?? '—'}</TableCell>
-                                <TableCell>{row.timeWindow || '—'}</TableCell>
-                                <TableCell><OrderStatusBadge status={row.status} /></TableCell>
-                                <TableCell>{row.serviceType.replace(/_/g, ' ')}</TableCell>
-                                <TableCell className="text-right">
-                                  {row.billTotalPaise != null ? formatMoney(row.billTotalPaise) : '—'}
-                                </TableCell>
-                              </TableRow>
-                            );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
           ) : (
-            /* Calendar view: same data grouped by day in a grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
               {scheduledPickups.orderedKeys.map((dateKey) => {
                 const rows = scheduledPickups.byDate.get(dateKey)!;

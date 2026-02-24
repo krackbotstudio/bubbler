@@ -54,4 +54,22 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Dropdowns: light pink background, magenta text; dark placeholder before selection */
+  select {
+    @apply rounded-md border border-pink-200 bg-pink-100 px-2 py-1.5 text-sm text-pink-700;
+  }
+  select option:first-of-type,
+  select option[value=""] {
+    @apply text-gray-700;
+  }
+  select option:not(:first-of-type):not([value=""]) {
+    @apply text-pink-700;
+  }
+  .dark select {
+    @apply border-pink-800 bg-pink-900/30 text-pink-300;
+  }
+  .dark select option:first-of-type,
+  .dark select option[value=""] {
+    @apply text-gray-400;
+  }
 }

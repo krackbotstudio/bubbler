@@ -26,6 +26,8 @@ function toOrderRecord(row: {
   serviceType: string;
   serviceTypes?: string[];
   addressId: string;
+  addressLabel?: string | null;
+  addressLine?: string | null;
   pincode: string;
   pickupDate: Date;
   timeWindow: string;
@@ -55,6 +57,8 @@ function toOrderRecord(row: {
     serviceType: row.serviceType as OrderRecord['serviceType'],
     serviceTypes: serviceTypes.length > 0 ? serviceTypes : [row.serviceType as OrderRecord['serviceType']],
     addressId: row.addressId,
+    addressLabel: row.addressLabel ?? null,
+    addressLine: row.addressLine ?? null,
     pincode: row.pincode,
     pickupDate: row.pickupDate,
     timeWindow: row.timeWindow,
@@ -150,6 +154,8 @@ export class PrismaOrdersRepo implements OrdersRepo {
           serviceType: data.serviceType,
           serviceTypes: data.serviceTypes ?? [],
           addressId: data.addressId,
+          addressLabel: data.addressLabel ?? undefined,
+          addressLine: data.addressLine ?? undefined,
           pincode: data.pincode,
           pickupDate: data.pickupDate,
           timeWindow: data.timeWindow,
@@ -509,7 +515,8 @@ export class PrismaOrdersRepo implements OrdersRepo {
 
     const customer = order.user;
     const address = order.address;
-    const pincode = order.pincode || address.pincode;
+    const orderWithSnapshot = order as { addressLabel?: string | null; addressLine?: string | null };
+    const pincode = order.pincode || address?.pincode;
     let branchForSummary: { id: string; name: string; address: string; gstNumber: string | null; panNumber: string | null } | null = order.branch
       ? { id: order.branch.id, name: order.branch.name, address: order.branch.address, gstNumber: order.branch.gstNumber ?? null, panNumber: order.branch.panNumber ?? null }
       : null;
@@ -537,10 +544,10 @@ export class PrismaOrdersRepo implements OrdersRepo {
         email: customer.email ?? null,
       },
       address: {
-        id: address.id,
-        label: address.label,
-        addressLine: address.addressLine,
-        pincode: address.pincode,
+        id: order.addressId,
+        label: address ? address.label : (orderWithSnapshot.addressLabel ?? ''),
+        addressLine: address ? address.addressLine : (orderWithSnapshot.addressLine ?? ''),
+        pincode: address ? address.pincode : (order.pincode ?? ''),
       },
       branch: branchForSummary,
       orderItems: order.orderItems.map((oi) => ({

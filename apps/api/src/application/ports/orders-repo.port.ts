@@ -10,6 +10,10 @@ export interface OrderRecord {
   serviceType: ServiceType;
   serviceTypes: ServiceType[];
   addressId: string;
+  /** Address label at order time; shown even after address is edited/deleted. */
+  addressLabel: string | null;
+  /** Full address line at order time; shown even after address is edited/deleted. */
+  addressLine: string | null;
   pincode: string;
   pickupDate: Date;
   timeWindow: string;
@@ -37,6 +41,10 @@ export interface CreateOrderInput {
   serviceType: ServiceType;
   serviceTypes: ServiceType[];
   addressId: string;
+  /** Address label at order time (stored so it doesn't change if user edits/deletes address). */
+  addressLabel?: string | null;
+  /** Full address line at order time (stored so it doesn't change if user edits/deletes address). */
+  addressLine?: string | null;
   pincode: string;
   pickupDate: Date;
   timeWindow: string;

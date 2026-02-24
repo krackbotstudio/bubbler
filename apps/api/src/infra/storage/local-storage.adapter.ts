@@ -25,7 +25,7 @@ export class LocalStorageAdapter implements StorageAdapter {
     this.root = path.resolve(root);
   }
 
-  async putObject(pathKey: string, buffer: Buffer, _contentType: string): Promise<void> {
+  async putObject(pathKey: string, buffer: Buffer, _contentType: string): Promise<string | void> {
     const fullPath = path.join(this.root, pathKey);
     const dir = path.dirname(fullPath);
     if (!fs.existsSync(dir)) {

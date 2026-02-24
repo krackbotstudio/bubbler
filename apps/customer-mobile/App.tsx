@@ -212,6 +212,28 @@ export default function App() {
     return ids;
   }, [orders]);
 
+  /** Address IDs that have an active subscription. Used to block edit/delete (address cannot be changed while subscription is active). */
+  const addressIdsWithActiveSubscription = useMemo(() => {
+    const ids = new Set<string>();
+    (meData?.activeSubscriptions ?? []).forEach((s) => {
+      const aid = (s as ActiveSubscriptionItem).addressId;
+      if (aid) ids.add(aid);
+    });
+    return ids;
+  }, [meData?.activeSubscriptions]);
+
+  /** Subscription IDs that have an active order (not DELIVERED/CANCELLED). User cannot start a new booking with these until the order is complete. */
+  const subscriptionIdsWithActiveOrder = useMemo(() => {
+    const ids = new Set<string>();
+    orders.forEach((o) => {
+      const s = (o.status || '').toUpperCase();
+      if (s !== 'DELIVERED' && s !== 'CANCELLED' && o.subscriptionId) {
+        ids.add(o.subscriptionId);
+      }
+    });
+    return ids;
+  }, [orders]);
+
   /** Available plans for the selected address's branch: common plans (no branchIds) + plans for that branch. */
   const plansForSelectedBranch = useMemo(() => {
     const branchId = plansBranchInfo?.branchId;
@@ -919,10 +941,10 @@ export default function App() {
   };
 
   const handleDeleteAddress = (addressId: string) => {
-    if (addressIdsWithActiveOrder.has(addressId)) {
+    if (addressIdsWithActiveOrder.has(addressId) || addressIdsWithActiveSubscription.has(addressId)) {
       Alert.alert(
         'Cannot delete',
-        'This address has active orders. Complete or cancel those orders first.',
+        'This address has active orders or an active plan. Complete or cancel orders and wait for the plan to end before deleting.',
         [{ text: 'OK' }]
       );
       return;
@@ -1277,7 +1299,7 @@ export default function App() {
               <Text style={styles.muted}>No addresses yet. Add one below.</Text>
             ) : (
               savedAddresses.map((a) => {
-                const hasActiveOrder = addressIdsWithActiveOrder.has(a.id);
+                const hasActiveOrderOrPlan = addressIdsWithActiveOrder.has(a.id) || addressIdsWithActiveSubscription.has(a.id);
                 return (
                   <View key={a.id} style={styles.addressCardRow}>
                     <View style={{ flex: 1 }}>
@@ -1288,19 +1310,19 @@ export default function App() {
                             <Text style={styles.defaultAddressTagText}>Default</Text>
                           </View>
                         ) : null}
-                        {hasActiveOrder ? (
+                        {hasActiveOrderOrPlan ? (
                           <View style={[styles.defaultAddressTag, { backgroundColor: '#f59e0b' }]}>
-                            <Text style={styles.defaultAddressTagText}>Active order</Text>
+                            <Text style={styles.defaultAddressTagText}>Active order or plan</Text>
                           </View>
                         ) : null}
                       </View>
                       <Text style={styles.addressLine}>{a.addressLine}</Text>
                       <Text style={styles.addressPincode}>Pincode: {a.pincode}</Text>
-                      {hasActiveOrder ? (
-                        <Text style={[styles.muted, { marginTop: 4, fontSize: 12 }]}>Edit and delete are disabled until orders at this address are completed or cancelled.</Text>
-                      ) : null}
+                        {hasActiveOrderOrPlan ? (
+                          <Text style={[styles.muted, { marginTop: 4, fontSize: 12 }]}>Edit and delete are disabled until orders and active plans at this address are completed or cancelled.</Text>
+                        ) : null}
                     </View>
-                    {!hasActiveOrder && (
+                    {!hasActiveOrderOrPlan && (
                       <>
                         <TouchableOpacity
                           style={styles.editAddressButton}
@@ -1584,18 +1606,23 @@ export default function App() {
                 <View style={{ marginTop: 24 }}>
                   <Text style={[styles.subtitle, { fontWeight: '600', marginBottom: 6 }]}>Active plans</Text>
                   <Text style={[styles.muted, { marginBottom: 12 }]}>
-                    Tap a plan to book a slot (address is locked for the subscription).
+                    Tap a plan to book a slot (address is locked for the subscription). You cannot book again with a plan that already has an order in progress.
                   </Text>
                   {(meData?.activeSubscriptions ?? []).map((sub) => {
                     const subAddressId = (sub as ActiveSubscriptionItem).addressId ?? null;
-                    const addressLabel = subAddressId
+                    const addressLabel = (sub as ActiveSubscriptionItem).addressLabel ?? (subAddressId
                       ? (savedAddresses.find((a) => a.id === subAddressId)?.label || 'Address')
-                      : 'Address';
+                      : 'Address');
+                    const hasActiveOrder = subscriptionIdsWithActiveOrder.has(sub.id);
                     return (
                     <TouchableOpacity
                       key={sub.id}
-                      style={[styles.activePlanTile, { marginBottom: 12 }]}
-                      onPress={() => {
+                      style={[
+                        styles.activePlanTile,
+                        { marginBottom: 12 },
+                        hasActiveOrder && { opacity: 0.7, backgroundColor: colors.borderLight },
+                      ]}
+                      onPress={hasActiveOrder ? undefined : () => {
                         setError(null);
                         bookingFromSubscriptionRef.current = true;
                         setBookingSubscriptionId(sub.id);
@@ -1605,7 +1632,8 @@ export default function App() {
                         setBookingAddress(null);
                         setBookingStep('date');
                       }}
-                      activeOpacity={0.8}
+                      activeOpacity={hasActiveOrder ? 1 : 0.8}
+                      disabled={hasActiveOrder}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                         <Text style={styles.activePlanTileTitle}>{sub.planName ?? 'Plan'}</Text>
@@ -1617,6 +1645,11 @@ export default function App() {
                         {sub.remainingPickups}/{sub.maxPickups} pickups left
                         {sub.validTill ? ` · Valid till ${sub.validTill.slice(0, 10)}` : ''}
                       </Text>
+                      {hasActiveOrder && (
+                        <Text style={[styles.muted, { marginTop: 6, fontSize: 12 }]}>
+                          You have an active order with this plan. Complete or wait for it before booking again.
+                        </Text>
+                      )}
                     </TouchableOpacity>
                   );
                   })}
@@ -2110,6 +2143,8 @@ export default function App() {
                 (meData?.activeSubscriptions ?? []).map((sub) => {
                   const canBook = sub.remainingPickups > 0 && !sub.hasActiveOrder && new Date(sub.validTill) >= new Date();
                   const desc = sub.planDescription?.trim() || `Valid till ${sub.validTill.slice(0, 10)} · Pickups: ${sub.remainingPickups}/${sub.maxPickups}${sub.kgLimit != null ? ` · ${sub.kgLimit} kg` : ''}${sub.itemsLimit != null ? ` · ${sub.itemsLimit} items` : ''}`;
+                  const subAddressId = (sub as ActiveSubscriptionItem).addressId ?? null;
+                  const addressLabel = (sub as ActiveSubscriptionItem & { addressLabel?: string | null }).addressLabel ?? (subAddressId ? (savedAddresses.find((a) => a.id === subAddressId)?.label || 'Address') : null);
                   return (
                     <TouchableOpacity
                       key={sub.id}
@@ -2118,7 +2153,14 @@ export default function App() {
                       activeOpacity={0.9}
                     >
                       <View>
-                        <Text style={styles.addressLabel}>{sub.planName}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
+                          <Text style={styles.addressLabel}>{sub.planName}</Text>
+                          {addressLabel ? (
+                            <View style={[styles.defaultAddressTag, { backgroundColor: colors.primaryLight }]}>
+                              <Text style={styles.defaultAddressTagText}>{addressLabel}</Text>
+                            </View>
+                          ) : null}
+                        </View>
                         <Text style={styles.addressLine}>{desc}</Text>
                         <Text style={styles.muted}>Left: {sub.remainingPickups} pickups{sub.remainingKg != null ? ` · ${sub.remainingKg} kg` : ''}{sub.remainingItems != null ? ` · ${sub.remainingItems} items` : ''} · Valid till {sub.validTill.slice(0, 10)}</Text>
                         {canBook ? (
@@ -2164,6 +2206,9 @@ export default function App() {
                 const desc = `From ${sub.validityStartDate.slice(0, 10)} to ${sub.validTill.slice(0, 10)} · Used pickups: ${sub.usedPickups}/${sub.maxPickups}${sub.kgLimit != null ? ` · ${sub.usedKg}/${sub.kgLimit} kg` : ''}${
                   sub.itemsLimit != null ? ` · ${sub.usedItemsCount}/${sub.itemsLimit} items` : ''
                 }`;
+                const pastSub = sub as PastSubscriptionItem & { addressId?: string | null; addressLabel?: string | null };
+                const pastAddressId = pastSub.addressId ?? null;
+                const pastAddressLabel = pastSub.addressLabel ?? (pastAddressId ? (savedAddresses.find((a) => a.id === pastAddressId)?.label || 'Address') : null);
                 return (
                   <TouchableOpacity
                     key={sub.id}
@@ -2171,7 +2216,14 @@ export default function App() {
                     onPress={() => { setSelectedSubscriptionId(sub.id); setHomeScreen('subscriptionDetail'); }}
                     activeOpacity={0.9}
                   >
-                    <Text style={styles.addressLabel}>{sub.planName}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
+                      <Text style={styles.addressLabel}>{sub.planName}</Text>
+                      {pastAddressLabel ? (
+                        <View style={[styles.defaultAddressTag, { backgroundColor: '#9ca3af' }]}>
+                          <Text style={styles.defaultAddressTagText}>{pastAddressLabel}</Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <Text style={styles.addressLine}>{desc}</Text>
                     <Text style={styles.muted}>Ended on {sub.inactivatedAt.slice(0, 10)}</Text>
                   </TouchableOpacity>
@@ -2416,14 +2468,13 @@ export default function App() {
                 </View>
                 {orderDetail.addressId && (() => {
                   const addr = addresses.find((a) => a.id === orderDetail.addressId);
-                  if (addr) {
+                  const label = addr?.label ?? orderDetail.addressLabel ?? null;
+                  const line = addr?.addressLine ?? orderDetail.addressLine ?? null;
+                  const pincode = addr?.pincode ?? orderDetail.pincode ?? '';
+                  if (label || line || pincode) {
+                    const parts = [label, line].filter(Boolean).join(' – ');
                     return (
-                      <Text style={styles.subtitle}>Address: {addr.label} – {addr.addressLine}, {addr.pincode}</Text>
-                    );
-                  }
-                  if (orderDetail.pincode) {
-                    return (
-                      <Text style={styles.subtitle}>Address: Pincode {orderDetail.pincode}</Text>
+                      <Text style={styles.subtitle}>Address: {parts ? `${parts}, ${pincode}` : `Pincode ${pincode}`}</Text>
                     );
                   }
                   return null;
@@ -2935,6 +2986,7 @@ export default function App() {
                         setBookingTimeSlot('');
                         setSlotAvailability(null);
                         setHomeScreen('bookPickup');
+                        fetchOrders();
                       }}
                     >
                       <MaterialIcons name="event-available" size={30} color={colors.white} />

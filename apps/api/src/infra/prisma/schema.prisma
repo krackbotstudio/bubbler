@@ -257,6 +257,9 @@ model Subscription {
   branchId           String?
   /** Address this subscription is tied to (pincode determines branch). Cannot be changed. */
   addressId          String?
+  /** Snapshot of address at purchase so it still displays after address is edited/deleted. */
+  addressLabel       String?
+  addressLine        String?
   validityStartDate   DateTime            @default(now())
   remainingPickups   Int
   expiryDate         DateTime
@@ -312,6 +315,9 @@ model Order {
   serviceType       ServiceType
   serviceTypes      ServiceType[]      @default([])
   addressId         String
+  /** Snapshot of address at order so it still displays after address is edited/deleted. */
+  addressLabel      String?
+  addressLine       String?
   pincode           String
   pickupDate        DateTime
   timeWindow        String

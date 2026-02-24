@@ -201,8 +201,8 @@ export class AdminCatalogService {
     const fileName = `icon-${Date.now()}-${safeName}`;
     const pathKey = `catalog-icons/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const url = `/api/assets/catalog-icons/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/catalog-icons/${fileName}`;
     return { url };
   }
 

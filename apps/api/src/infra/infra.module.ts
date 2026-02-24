@@ -57,6 +57,7 @@ import type {
   PdfGenerator,
 } from '../application/ports';
 import { LocalStorageAdapter } from './storage/local-storage.adapter';
+import { SupabaseStorageAdapter } from './storage/supabase-storage.adapter';
 import { SimplePdfGenerator } from './pdf/simple-pdf.generator';
 
 export const ORDERS_REPO = Symbol('OrdersRepo');
@@ -192,8 +193,15 @@ export const PDF_GENERATOR = Symbol('PdfGenerator');
     },
     {
       provide: STORAGE_ADAPTER,
-      useFactory: (): StorageAdapter =>
-        new LocalStorageAdapter(process.env.LOCAL_STORAGE_ROOT ?? './storage'),
+      useFactory: (): StorageAdapter => {
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const bucket = process.env.SUPABASE_STORAGE_BUCKET;
+        if (url && key && bucket) {
+          return new SupabaseStorageAdapter({ url, serviceRoleKey: key, bucket });
+        }
+        return new LocalStorageAdapter(process.env.LOCAL_STORAGE_ROOT ?? './storage');
+      },
     },
     {
       provide: PDF_GENERATOR,

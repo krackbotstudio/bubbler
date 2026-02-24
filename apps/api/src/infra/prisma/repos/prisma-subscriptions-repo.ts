@@ -91,6 +91,7 @@ export class PrismaSubscriptionsRepo implements SubscriptionsRepo {
         planId: sub.planId,
         planName: sub.plan.name,
         addressId: sub.addressId ?? null,
+        addressLabel: (sub as { addressLabel?: string | null }).addressLabel ?? null,
         validityStartDate: sub.validityStartDate,
         validTill: sub.expiryDate,
         remainingPickups: sub.remainingPickups,
@@ -172,6 +173,7 @@ export class PrismaSubscriptionsRepo implements SubscriptionsRepo {
     kgLimit: number | null;
     itemsLimit: number | null;
     inactivatedAt: Date;
+    addressLabel?: string | null;
   })[]> {
     const rows = await (this.prisma as PrismaClient).subscription.findMany({
       where: {
@@ -194,6 +196,7 @@ export class PrismaSubscriptionsRepo implements SubscriptionsRepo {
         kgLimit,
         itemsLimit,
         inactivatedAt: row.updatedAt,
+        addressLabel: (row as { addressLabel?: string | null }).addressLabel ?? null,
       };
     });
   }
@@ -205,6 +208,8 @@ export class PrismaSubscriptionsRepo implements SubscriptionsRepo {
         planId: data.planId,
         branchId: data.branchId ?? undefined,
         addressId: data.addressId ?? undefined,
+        addressLabel: data.addressLabel ?? undefined,
+        addressLine: data.addressLine ?? undefined,
         validityStartDate: data.validityStartDate,
         expiryDate: data.expiryDate,
         remainingPickups: data.remainingPickups,

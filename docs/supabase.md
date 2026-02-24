@@ -108,3 +108,41 @@ Do **not** run the above on production if you rely on RLS for multi-tenant or ro
 
 - **SSL required**  
   Always add `?sslmode=require` to the end of `DATABASE_URL`.
+
+---
+
+# Supabase Storage (images & assets)
+
+Branding logos, carousel images, catalog item icons, and branch logos are stored via a **Storage Adapter**. By default they go to local disk (`./storage`), which is lost on server restart or new deployment. To persist them across restarts and deploys, use **Supabase Storage**.
+
+## 1. Create a storage bucket
+
+1. In [Supabase Dashboard](https://supabase.com/dashboard) → your project, go to **Storage**.
+2. Click **New bucket**.
+3. Name it e.g. `assets` (or `weyou-app`).
+4. Set the bucket to **Public** so logo, carousel, and icon URLs work without signed URLs.
+5. Create the bucket.
+
+## 2. Get API URL and service role key
+
+1. Go to **Settings** (gear) → **API**.
+2. Copy **Project URL** (e.g. `https://xxxx.supabase.co`).
+3. Under **Project API keys**, copy the **service_role** key (secret; do not expose in frontend).
+
+## 3. Set env in `.env`
+
+In the **repo root** (same `.env` as `DATABASE_URL`), add:
+
+```env
+SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key-here"
+SUPABASE_STORAGE_BUCKET="assets"
+```
+
+Use your real project URL, service role key, and bucket name. Restart the API after changing `.env`.
+
+## 4. Behaviour
+
+- When `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` are all set, the API uses **Supabase Storage** for all uploads (branding, carousel, branches, catalog icons, and invoice PDFs). Stored URLs are full Supabase public URLs, so images load from Supabase even after server restart or redeploy.
+- If any of these env vars is missing, the API falls back to **local storage** (`LOCAL_STORAGE_ROOT`, default `./storage`). Existing relative URLs (e.g. `/api/assets/branding/...`) continue to be served by the API from local disk when using local storage.
+- **Existing uploads**: Old images that were saved as `/api/assets/...` remain in the database. They will only work as long as the API serves them (local storage). After you switch to Supabase, **new** uploads will get Supabase URLs and persist. Re-upload branding/carousel/icons in the admin to move them to Supabase if needed.

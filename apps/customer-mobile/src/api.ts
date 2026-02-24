@@ -211,6 +211,8 @@ export interface ActiveSubscriptionItem {
   planDescription?: string | null;
   /** Address this subscription is tied to (pickup/delivery only at this address). */
   addressId: string | null;
+  /** Address label at purchase; still shown after address is edited/deleted. */
+  addressLabel?: string | null;
   validityStartDate: string;
   validTill: string;
   remainingPickups: number;
@@ -226,6 +228,10 @@ export interface PastSubscriptionItem {
   id: string;
   planId: string;
   planName: string;
+  /** Address ID at purchase (may be deleted later). */
+  addressId?: string | null;
+  /** Address label at purchase; still shown after address is edited/deleted. */
+  addressLabel?: string | null;
   validityStartDate: string;
   validTill: string;
   inactivatedAt: string;
@@ -561,6 +567,10 @@ export interface OrderSummary {
   paymentStatus?: string;
   /** Address ID for this order (used to block edit/delete of address when it has active orders). */
   addressId?: string;
+  /** Address label at order time (shown even after address is edited/deleted). */
+  addressLabel?: string | null;
+  /** Full address line at order time (shown even after address is edited/deleted). */
+  addressLine?: string | null;
   /** Subscription utilisation from invoice (ACK or final): weight in kg. */
   subscriptionUsageKg?: number | null;
   /** Subscription utilisation from invoice: items count. */
@@ -571,6 +581,8 @@ export interface OrderDetail extends OrderSummary {
   orderType: string;
   serviceTypes: string[];
   addressId: string;
+  addressLabel?: string | null;
+  addressLine?: string | null;
   pincode: string;
   estimatedWeightKg: number | null;
   actualWeightKg: number | null;

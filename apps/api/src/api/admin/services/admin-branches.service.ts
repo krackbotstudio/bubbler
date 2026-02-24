@@ -62,8 +62,8 @@ export class AdminBranchesService {
     const fileName = `branch-${branchId}-${Date.now()}-${safeName}`;
     const pathKey = `branding/branches/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const url = `/api/assets/branding/branches/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/branding/branches/${fileName}`;
     await this.branchRepo.setLogoUrl(branchId, url);
     return this.getById(branchId);
   }
@@ -74,8 +74,8 @@ export class AdminBranchesService {
     const fileName = `branch-${branchId}-qr-${Date.now()}-${safeName}`;
     const pathKey = `branding/branches/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const url = `/api/assets/branding/branches/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/branding/branches/${fileName}`;
     await this.branchRepo.setUpiQrUrl(branchId, url);
     return this.getById(branchId);
   }

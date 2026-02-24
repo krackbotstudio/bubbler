@@ -55,8 +55,8 @@ export class AdminCarouselService {
     const fileName = `${Date.now()}-${safeName}`;
     const pathKey = `carousel/${fileName}`;
     const contentType = contentTypeFromExt(originalName);
-    await this.storageAdapter.putObject(pathKey, buffer, contentType);
-    const imageUrl = `/api/assets/carousel/${fileName}`;
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const imageUrl = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/carousel/${fileName}`;
     const record = await this.carouselRepo.setImage(position, imageUrl);
     return {
       position: record.position,

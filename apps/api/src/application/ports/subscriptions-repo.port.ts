@@ -31,6 +31,8 @@ export interface ActiveSubscriptionWithPlanRecord extends ActiveSubscriptionReco
   planId: string;
   planName: string;
   addressId: string | null;
+  /** Snapshot at purchase; still displayed after address is edited/deleted. */
+  addressLabel: string | null;
   validityStartDate: Date;
   validTill: Date;
   remainingPickups: number;
@@ -48,6 +50,9 @@ export interface CreateSubscriptionInput {
   planId: string;
   branchId?: string | null;
   addressId?: string | null;
+  /** Snapshot at purchase so address still displays after edit/delete. */
+  addressLabel?: string | null;
+  addressLine?: string | null;
   validityStartDate: Date;
   expiryDate: Date;
   remainingPickups: number;

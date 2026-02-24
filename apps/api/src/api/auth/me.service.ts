@@ -18,6 +18,8 @@ export interface MeResponse {
     planDescription: string | null;
     /** Address this subscription is tied to (pickup/delivery only at this address). */
     addressId: string | null;
+    /** Address label at purchase; still shown after address is edited/deleted. */
+    addressLabel: string | null;
     validityStartDate: string;
     validTill: string;
     remainingPickups: number;
@@ -51,6 +53,9 @@ export interface MeResponse {
     id: string;
     planId: string;
     planName: string;
+    addressId: string | null;
+    /** Address label at purchase; still shown after address is edited/deleted. */
+    addressLabel: string | null;
     validityStartDate: string;
     validTill: string;
     inactivatedAt: string;
@@ -93,6 +98,7 @@ export class MeService {
           planName: s.planName,
           planDescription: plan?.description ?? null,
           addressId: s.addressId ?? null,
+          addressLabel: s.addressLabel ?? null,
           validityStartDate: s.validityStartDate.toISOString(),
           validTill: s.validTill.toISOString(),
           remainingPickups: s.remainingPickups,
@@ -112,6 +118,8 @@ export class MeService {
         id: s.id,
         planId: s.planId,
         planName: s.planName,
+        addressId: s.addressId ?? null,
+        addressLabel: (s as { addressLabel?: string | null }).addressLabel ?? null,
         validityStartDate: s.validityStartDate.toISOString(),
         validTill: s.expiryDate.toISOString(),
         inactivatedAt: s.inactivatedAt.toISOString(),

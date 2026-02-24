@@ -10,6 +10,8 @@ import { formatMoney } from '@/lib/format';
 import { getApiOrigin } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { AddItemsToInvoiceDialog } from './AddItemsToInvoiceDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CatalogItemIcon } from '@/components/catalog/CatalogItemIcon';
 
 const ITEM_TYPES: InvoiceItemType[] = ['SERVICE', 'FEE', 'ADDON', 'DRYCLEAN_ITEM', 'DISCOUNT'];
 
@@ -484,11 +486,9 @@ export function InvoiceBuilder({
                       <>
                         <td className="py-1">
                           {canEdit ? (
-                            <select
-                              className="h-8 w-full max-w-[140px] rounded border px-1 text-sm"
+                            <Select
                               value={row.catalogItemId}
-                              onChange={(e) => {
-                                const newItemId = e.target.value;
+                              onValueChange={(newItemId) => {
                                 const it = catalogMatrix.items.find((x) => x.id === newItemId);
                                 const segs = getSegmentsForItem(newItemId);
                                 const svcsForCurrentSeg =
@@ -510,12 +510,46 @@ export function InvoiceBuilder({
                                 });
                               }}
                             >
-                              {catalogMatrix.items.filter((x) => x.active).map((x) => (
-                                <option key={x.id} value={x.id}>{x.name}</option>
-                              ))}
-                            </select>
+                              <SelectTrigger className="h-8 w-full max-w-[160px]">
+                                <span className="flex items-center gap-2">
+                                  {(() => {
+                                    const it = catalogMatrix.items.find((x) => x.id === row.catalogItemId);
+                                    return it ? (
+                                      <>
+                                        <CatalogItemIcon icon={it.icon} size={18} className="shrink-0" />
+                                        <SelectValue>{it.name}</SelectValue>
+                                      </>
+                                    ) : (
+                                      <SelectValue placeholder="Item" />
+                                    );
+                                  })()}
+                                </span>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {catalogMatrix.items.filter((x) => x.active).map((x) => (
+                                  <SelectItem key={x.id} value={x.id}>
+                                    <span className="flex items-center gap-2">
+                                      <CatalogItemIcon icon={x.icon} size={18} className="shrink-0" />
+                                      {x.name}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           ) : (
-                            row.name
+                            (() => {
+                              const it = row.catalogItemId && catalogMatrix
+                                ? catalogMatrix.items.find((x) => x.id === row.catalogItemId)
+                                : null;
+                              return it ? (
+                                <span className="flex items-center gap-2">
+                                  <CatalogItemIcon icon={it.icon} size={18} className="shrink-0" />
+                                  {row.name}
+                                </span>
+                              ) : (
+                                row.name
+                              );
+                            })()
                           )}
                         </td>
                         <td className="py-1">
