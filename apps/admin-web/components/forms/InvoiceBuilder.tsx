@@ -511,12 +511,14 @@ export function InvoiceBuilder({
                               }}
                             >
                               <SelectTrigger className="h-8 w-full max-w-[160px]">
-                                <span className="flex items-center gap-2">
+                                <span className="flex items-center gap-2 min-h-0">
                                   {(() => {
                                     const it = catalogMatrix.items.find((x) => x.id === row.catalogItemId);
                                     return it ? (
                                       <>
-                                        <CatalogItemIcon icon={it.icon} size={18} className="shrink-0" />
+                                        <span className="flex shrink-0 items-center justify-center self-center">
+                                          <CatalogItemIcon icon={it.icon} size={18} className="shrink-0" />
+                                        </span>
                                         <SelectValue>{it.name}</SelectValue>
                                       </>
                                     ) : (
@@ -529,7 +531,9 @@ export function InvoiceBuilder({
                                 {catalogMatrix.items.filter((x) => x.active).map((x) => (
                                   <SelectItem key={x.id} value={x.id}>
                                     <span className="flex items-center gap-2">
-                                      <CatalogItemIcon icon={x.icon} size={18} className="shrink-0" />
+                                      <span className="flex shrink-0 items-center justify-center self-center">
+                                        <CatalogItemIcon icon={x.icon} size={18} className="shrink-0" />
+                                      </span>
                                       {x.name}
                                     </span>
                                   </SelectItem>
@@ -543,7 +547,9 @@ export function InvoiceBuilder({
                                 : null;
                               return it ? (
                                 <span className="flex items-center gap-2">
-                                  <CatalogItemIcon icon={it.icon} size={18} className="shrink-0" />
+                                  <span className="flex shrink-0 items-center justify-center self-center">
+                                    <CatalogItemIcon icon={it.icon} size={18} className="shrink-0" />
+                                  </span>
                                   {row.name}
                                 </span>
                               ) : (

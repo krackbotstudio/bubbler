@@ -113,14 +113,14 @@ export function AddItemsToInvoiceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] min-h-[70vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add items to invoice</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
           Expand an item, choose Segment and Service, then add to invoice.
         </p>
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto min-h-0 py-2">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto min-h-0 flex-1 py-2">
           {activeItems.map((item) => {
             const isExpanded = expandedId === item.id;
             const segments = getSegmentsForItem(catalogMatrix, item.id);
@@ -155,13 +155,14 @@ export function AddItemsToInvoiceDialog({
                 </button>
                 {isExpanded && (
                   <div
-                    className="absolute left-0 right-0 top-full z-20 mt-0.5 rounded-md border bg-popover shadow-lg px-3 py-3 space-y-3 min-w-[240px] max-h-[280px] overflow-y-auto"
+                    className="absolute left-0 right-0 top-full z-20 mt-0.5 rounded-md border bg-popover shadow-lg px-3 py-3 space-y-3 min-w-[240px] max-h-[320px] overflow-y-auto"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Segment</label>
+                      <label className="text-xs font-medium text-muted-foreground block">Segment</label>
                       <select
-                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        className="mt-1.5 h-9 w-full rounded-md border border-pink-200 bg-white pl-3 pr-8 py-2 text-sm text-pink-700 appearance-none bg-no-repeat dark:bg-background dark:border-pink-800 dark:text-pink-300"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23be185d' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundPosition: 'right 8px center' }}
                         value={segmentId}
                         onChange={(e) => {
                           const v = e.target.value;
@@ -176,9 +177,10 @@ export function AddItemsToInvoiceDialog({
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Service</label>
+                      <label className="text-xs font-medium text-muted-foreground block">Service</label>
                       <select
-                        className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        className="mt-1.5 h-9 w-full rounded-md border border-pink-200 bg-white pl-3 pr-8 py-2 text-sm text-pink-700 appearance-none bg-no-repeat dark:bg-background dark:border-pink-800 dark:text-pink-300"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23be185d' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundPosition: 'right 8px center' }}
                         value={serviceId}
                         onChange={(e) =>
                           setServiceByItem((prev) => ({ ...prev, [item.id]: e.target.value }))
@@ -193,7 +195,7 @@ export function AddItemsToInvoiceDialog({
                     </div>
                     <div className="flex flex-wrap items-end gap-2">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground">Qty</label>
+                        <label className="text-xs font-medium text-muted-foreground block">Qty</label>
                         <Input
                           type="number"
                           min={1}
@@ -204,7 +206,7 @@ export function AddItemsToInvoiceDialog({
                               [item.id]: Math.max(1, Number(e.target.value) || 1),
                             }))
                           }
-                          className="h-9 w-20 mt-1"
+                          className="h-9 w-20 mt-1.5"
                         />
                       </div>
                       {totalPaise != null && (

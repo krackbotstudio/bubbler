@@ -18,18 +18,18 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-pink-200 bg-pink-50 pl-3 pr-2 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-      'min-w-[2px] [&>span]:line-clamp-1',
+      'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-pink-200 bg-white pl-3 pr-8 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+      'min-w-[2px] [&>span]:line-clamp-1 [&>span]:min-w-0',
       ' [&_span[data-placeholder]]:text-gray-500 [&_span[data-placeholder]]:font-normal',
       '[&_span:not([data-placeholder])]:font-semibold [&_span:not([data-placeholder])]:text-pink-700',
-      'dark:[&_span[data-placeholder]]:text-gray-400 dark:[&_span:not([data-placeholder])]:text-pink-300',
+      'dark:bg-background dark:border-pink-800 dark:[&_span[data-placeholder]]:text-gray-400 dark:[&_span:not([data-placeholder])]:text-pink-300',
       className
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 shrink-0 text-pink-700 ml-auto mr-0.5 dark:text-pink-300" />
+      <ChevronDown className="h-4 w-4 shrink-0 text-pink-700 ml-auto mr-1 dark:text-pink-300" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -77,7 +77,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-[99999] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-pink-200 bg-pink-50 text-pink-700 shadow-xl ring-1 ring-pink-200/50 dark:bg-pink-950/50 dark:border-pink-800 dark:text-pink-300 dark:ring-pink-800/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+        'relative z-[99999] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-pink-200 bg-white text-pink-700 shadow-xl ring-1 ring-pink-200/50 dark:bg-background dark:border-pink-800 dark:text-pink-300 dark:ring-pink-800/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         position === 'popper' &&
           'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
         className

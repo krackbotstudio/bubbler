@@ -14,8 +14,6 @@ import { OrderStatusBadge } from '@/components/shared/StatusBadge';
 import { formatMoney } from '@/lib/format';
 import type { AdminOrderListRow, OrderStatus } from '@/types';
 
-const HIDE_FROM_PICKUPS: OrderStatus[] = ['PICKED_UP', 'DELIVERED', 'CANCELLED'];
-
 const DASHBOARD_STATUS_CHIPS: { status: OrderStatus | 'CONFIRMED'; label: string }[] = [
   { status: 'CONFIRMED', label: 'Confirmed Orders' },
   { status: 'PICKED_UP', label: 'Picked up' },
@@ -24,7 +22,9 @@ const DASHBOARD_STATUS_CHIPS: { status: OrderStatus | 'CONFIRMED'; label: string
   { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery' },
 ];
 
-/** Current date in IST (YYYY-MM-DD) so Today/Tomorrow labels are correct for admin. */
+const STATUSES_FOR_CHIPS: OrderStatus[] = ['BOOKING_CONFIRMED', 'PICKUP_SCHEDULED', 'PICKED_UP', 'IN_PROCESSING', 'READY', 'OUT_FOR_DELIVERY'];
+
+/** Current date in IST (YYYY-MM-DD). */
 function getTodayIST(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 }
@@ -33,9 +33,27 @@ function toDateKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Normalize pickupDate from API (may be ISO string) to YYYY-MM-DD. */
+/** Normalize date from API (ISO string) to YYYY-MM-DD. */
+function dateKeyFromIso(iso: string | null | undefined): string | null {
+  if (!iso || typeof iso !== 'string') return null;
+  return iso.length >= 10 ? iso.slice(0, 10) : null;
+}
+
 function pickupDateKey(pickupDate: string): string {
   return typeof pickupDate === 'string' && pickupDate.length >= 10 ? pickupDate.slice(0, 10) : pickupDate;
+}
+
+/** Get the date key used for grouping: for confirmed = pickup date (customer-chosen); for others = status timestamp date. */
+function getOrderDateKey(row: AdminOrderListRow, statusFilter: OrderStatus | 'CONFIRMED' | ''): string | null {
+  const s = row.status as OrderStatus;
+  if (s === 'BOOKING_CONFIRMED' || s === 'PICKUP_SCHEDULED') {
+    return pickupDateKey(row.pickupDate);
+  }
+  if (s === 'PICKED_UP' && row.pickedUpAt) return dateKeyFromIso(row.pickedUpAt) ?? null;
+  if (s === 'IN_PROCESSING' && row.inProgressAt) return dateKeyFromIso(row.inProgressAt) ?? null;
+  if (s === 'READY' && row.readyAt) return dateKeyFromIso(row.readyAt) ?? null;
+  if (s === 'OUT_FOR_DELIVERY' && row.outForDeliveryAt) return dateKeyFromIso(row.outForDeliveryAt) ?? null;
+  return null;
 }
 
 function getDayLabel(dateKey: string, todayKey: string): string {
@@ -113,34 +131,33 @@ export default function DashboardPage() {
     return counts;
   }, [ordersData?.data]);
 
-  const scheduledPickups = useMemo(() => {
-    let list = (ordersData?.data ?? []).filter(
-      (row) => !HIDE_FROM_PICKUPS.includes(row.status as OrderStatus)
-    );
-    if (statusFilter) {
-      if (statusFilter === 'CONFIRMED') {
-        list = list.filter((row) => (row.status as OrderStatus) === 'BOOKING_CONFIRMED' || (row.status as OrderStatus) === 'PICKUP_SCHEDULED');
-      } else {
-        list = list.filter((row) => (row.status as OrderStatus) === statusFilter);
-      }
+  const ordersByDate = useMemo(() => {
+    const rows = ordersData?.data ?? [];
+    let list: AdminOrderListRow[];
+    if (statusFilter === 'CONFIRMED') {
+      list = rows.filter((row) => (row.status as OrderStatus) === 'BOOKING_CONFIRMED' || (row.status as OrderStatus) === 'PICKUP_SCHEDULED');
+    } else if (statusFilter) {
+      list = rows.filter((row) => (row.status as OrderStatus) === statusFilter);
+    } else {
+      list = rows.filter((row) => STATUSES_FOR_CHIPS.includes(row.status as OrderStatus));
     }
-    const missedFirst = [...list].sort((a, b) => {
-      const aKey = pickupDateKey(a.pickupDate);
-      const bKey = pickupDateKey(b.pickupDate);
-      const aMissed = aKey < todayKey ? 1 : 0;
-      const bMissed = bKey < todayKey ? 1 : 0;
+    const withDateKey = list
+      .map((row) => ({ row, dateKey: getOrderDateKey(row, statusFilter) }))
+      .filter((x): x is { row: AdminOrderListRow; dateKey: string } => x.dateKey != null);
+    const sorted = [...withDateKey].sort((a, b) => {
+      const aMissed = a.dateKey < todayKey ? 1 : 0;
+      const bMissed = b.dateKey < todayKey ? 1 : 0;
       if (aMissed !== bMissed) return aMissed - bMissed;
-      if (aKey !== bKey) return aKey.localeCompare(bKey);
-      return (a.timeWindow || '').localeCompare(b.timeWindow || '');
+      if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
+      return (a.row.timeWindow || '').localeCompare(b.row.timeWindow || '');
     });
     const byDate = new Map<string, AdminOrderListRow[]>();
-    for (const row of missedFirst) {
-      const key = pickupDateKey(row.pickupDate);
-      if (!byDate.has(key)) byDate.set(key, []);
-      byDate.get(key)!.push(row);
+    for (const { row, dateKey } of sorted) {
+      if (!byDate.has(dateKey)) byDate.set(dateKey, []);
+      byDate.get(dateKey)!.push(row);
     }
     const orderedKeys = Array.from(byDate.keys()).sort();
-    return { list: missedFirst, byDate, orderedKeys };
+    return { list: sorted.map((x) => x.row), byDate, orderedKeys };
   }, [ordersData?.data, todayKey, statusFilter]);
 
   return (
@@ -251,21 +268,29 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Scheduled Pickups – calendar view only */}
       <Card>
-        <CardHeader>
-          <CardTitle>Scheduled Pickups</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Next 1 week pickups by date chosen by customer. Missed (past pickups not picked up) appear at top. New confirmed bookings appear here as soon as the customer confirms. Refreshes every 30s. Picked up or cancelled orders are hidden.
-          </p>
+        <CardContent className="pt-4">
+          {statusFilter === 'CONFIRMED' && (
+            <p className="text-sm text-muted-foreground mb-4">
+              Grouped by pickup date (chosen by customer). Missed past dates at top.
+            </p>
+          )}
+          {statusFilter && statusFilter !== 'CONFIRMED' && (
+            <p className="text-sm text-muted-foreground mb-4">
+              Grouped by date when order reached this status.
+            </p>
+          )}
+          {!statusFilter && (
+            <p className="text-sm text-muted-foreground mb-4">
+              Confirmed: by pickup date. Others: by date of that status. Refreshes every 30s.
+            </p>
+          )}
           {ordersLoading ? (
             <Skeleton className="h-48 w-full" />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-              {scheduledPickups.orderedKeys.map((dateKey) => {
-                const rows = scheduledPickups.byDate.get(dateKey)!;
+              {ordersByDate.orderedKeys.map((dateKey) => {
+                const rows = ordersByDate.byDate.get(dateKey)!;
                 const isMissed = dateKey < todayKey;
                 const dayLabel = getDayLabel(dateKey, todayKey);
                 return (
@@ -275,7 +300,7 @@ export default function DashboardPage() {
                   >
                     <div className="text-sm font-semibold mb-2">
                       {dayLabel}
-                      {isMissed && <span className="text-destructive text-xs block">Missed</span>}
+                      {isMissed && statusFilter === 'CONFIRMED' && <span className="text-destructive text-xs block">Missed</span>}
                     </div>
                     <ul className="space-y-1">
                       {rows.map((row) => {
@@ -283,14 +308,15 @@ export default function DashboardPage() {
                         const rowBg = isSub
                           ? 'bg-sky-50 dark:bg-sky-950/30'
                           : 'bg-fuchsia-50 dark:bg-fuchsia-950/30';
+                        const status = row.status as OrderStatus;
                         return (
                         <li
                           key={row.id}
                           className={`text-xs cursor-pointer hover:underline truncate rounded px-1.5 py-0.5 ${rowBg}`}
                           onClick={() => router.push(`/orders/${row.id}`)}
-                          title={`${row.customerName ?? row.id} · ${row.timeWindow}${isSub ? ' · Subscription' : ' · Individual'}`}
+                          title={`${row.customerName ?? row.id} · ${row.timeWindow}${isSub ? ' · Subscription' : ''} · ${status}`}
                         >
-                          {row.customerName ?? row.id.slice(0, 8)} · {row.timeWindow}
+                          {row.customerName ?? row.id.slice(0, 8)} · {statusFilter === 'CONFIRMED' ? row.timeWindow : (row.timeWindow || '—')}
                         </li>
                         );
                       })}
@@ -298,8 +324,10 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
-              {scheduledPickups.orderedKeys.length === 0 && (
-                <p className="text-muted-foreground text-sm col-span-full py-4 text-center">No scheduled pickups.</p>
+              {ordersByDate.orderedKeys.length === 0 && (
+                <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
+                  {statusFilter ? `No orders in this status.` : 'No orders in these statuses.'}
+                </p>
               )}
             </div>
           )}

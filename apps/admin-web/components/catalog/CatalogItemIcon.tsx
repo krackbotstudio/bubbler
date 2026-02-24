@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { getApiOrigin } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 /** Map stored preset icon value (e.g. from API) to Lucide icon. */
 export const ICON_MAP: Record<string, LucideIcon> = {
@@ -53,8 +54,8 @@ export function CatalogItemIcon({ icon, size = 22, className }: CatalogItemIconP
         alt=""
         width={size}
         height={size}
-        className={className}
-        style={{ width: size, height: size, objectFit: 'contain' }}
+        className={cn('align-middle', className)}
+        style={{ width: size, height: size, objectFit: 'contain', verticalAlign: 'middle' }}
       />
     );
   }
