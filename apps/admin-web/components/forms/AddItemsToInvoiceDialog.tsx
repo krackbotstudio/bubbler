@@ -207,11 +207,11 @@ export function AddItemsToInvoiceDialog({
                 <Input
                   type="number"
                   min={1}
-                  value={qtyByItem[configItemId] ?? 1}
+                  value={qtyByItem[configItemId!] ?? 1}
                   onChange={(e) =>
                     setQtyByItem((prev) => ({
                       ...prev,
-                      [configItemId]: Math.max(1, Number(e.target.value) || 1),
+                      [configItemId!]: Math.max(1, Number(e.target.value) || 1),
                     }))
                   }
                   className="h-10"
@@ -227,7 +227,7 @@ export function AddItemsToInvoiceDialog({
                 type="button"
                 variant="default"
                 className="w-full"
-                onClick={() => handleAdd(configItemId)}
+                onClick={() => handleAdd(configItemId!)}
                 disabled={!configSegmentId || !configServiceId}
               >
                 Add to invoice
