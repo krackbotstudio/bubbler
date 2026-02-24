@@ -45,9 +45,9 @@ type OrderTab = 'ack' | 'final' | 'payment';
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const orderId = params.id as string;
+  const orderId = (params?.id as string) ?? '';
 
-  const { data: summary, isLoading, error } = useOrderSummary(orderId);
+  const { data: summary, isLoading, error } = useOrderSummary(orderId || null);
   const updateStatus = useUpdateOrderStatus(orderId);
   const createAckDraft = useCreateAckDraft(orderId);
   const issueAck = useIssueAck(orderId);
@@ -265,6 +265,15 @@ export default function OrderDetailPage() {
     }
   }, [summary, paymentAmountRupees]);
 
+  if (!orderId) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">Order ID is missing. Go back to the dashboard or orders list.</p>
+        <Link href="/dashboard" className="text-sm text-primary hover:underline">← Dashboard</Link>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div>
@@ -283,9 +292,18 @@ export default function OrderDetailPage() {
     );
   }
 
+  const order = summary?.order;
+  if (!order) {
+    return (
+      <div>
+        <p className="text-sm text-destructive">Order data is missing from the response.</p>
+        <Link href="/dashboard" className="text-sm text-primary hover:underline mt-2 inline-block">← Dashboard</Link>
+      </div>
+    );
+  }
+
   const ackInvoice = summary.invoices.find((i) => i.type === 'ACKNOWLEDGEMENT');
   const finalInvoice = summary.invoices.find((i) => i.type === 'FINAL');
-  const order = summary.order;
   const isDelivered = order.status === 'DELIVERED';
   const canIssueFinalInvoice =
     order.status === 'OUT_FOR_DELIVERY' ||
