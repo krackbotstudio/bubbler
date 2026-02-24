@@ -15,9 +15,7 @@ import { useCreateItem } from '@/hooks/useCatalog';
 import { toast } from 'sonner';
 import { getFriendlyErrorMessage } from '@/lib/api';
 import { ErrorDisplay } from '@/components/shared/ErrorDisplay';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { catalogIcons } from '@/constants/catalogIcons';
-import { CatalogItemIcon, isPresetIcon } from './CatalogItemIcon';
+import { CatalogItemIcon } from './CatalogItemIcon';
 import { useUploadCatalogIcon } from '@/hooks/useCatalog';
 
 interface AddItemModalProps {
@@ -81,61 +79,43 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
             </div>
             <div className="grid gap-2">
               <label className="text-sm font-medium">Icon (optional) — one per item</label>
-              <div className="flex flex-wrap items-end gap-3">
-                <Select
-                  value={isPresetIcon(icon) ? icon : ''}
-                  onValueChange={(v) => setIcon(v)}
-                >
-                  <SelectTrigger className="w-[220px] flex flex-row items-center">
-                    <span className="inline-flex flex-1 min-w-0 flex-row items-center gap-2 flex-nowrap">
-                      {icon ? (
-                        <>
-                          <CatalogItemIcon icon={icon} size={18} className="shrink-0" />
-                          <span className="truncate">
-                            {isPresetIcon(icon)
-                              ? catalogIcons.find((c) => c.value === icon)?.label ?? icon
-                              : 'Custom image'}
-                          </span>
-                        </>
-                      ) : (
-                        <SelectValue placeholder="Select icon" />
-                      )}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {catalogIcons.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        <span className="flex items-center gap-2">
-                          <CatalogItemIcon icon={opt.value} size={18} className="shrink-0" />
-                          {opt.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-muted-foreground">Or upload PNG/JPG</span>
-                  <input
-                    type="file"
-                    accept=".png,.jpg,.jpeg"
-                    className="text-sm file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground file:text-sm"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      uploadCatalogIcon.mutate(file, {
-                        onSuccess: (url) => {
-                          setIcon(url);
-                          toast.success('Icon uploaded');
-                        },
-                        onError: (err) => {
-                          toast.error(getFriendlyErrorMessage(err));
-                        },
-                      });
-                      e.target.value = '';
-                    }}
-                    disabled={uploadCatalogIcon.isPending}
-                  />
-                </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {icon && (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/50">
+                    <CatalogItemIcon icon={icon} size={22} />
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg"
+                  className="text-sm file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground file:text-sm"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    uploadCatalogIcon.mutate(file, {
+                      onSuccess: (url) => {
+                        setIcon(url);
+                        toast.success('Icon uploaded');
+                      },
+                      onError: (err) => {
+                        toast.error(getFriendlyErrorMessage(err));
+                      },
+                    });
+                    e.target.value = '';
+                  }}
+                  disabled={uploadCatalogIcon.isPending}
+                />
+                {icon && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => setIcon('')}
+                  >
+                    Remove icon
+                  </Button>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
