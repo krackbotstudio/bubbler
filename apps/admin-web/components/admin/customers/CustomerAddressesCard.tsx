@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { CustomerRecord } from '@/types';
-import { MapPin } from 'lucide-react';
+import { getGoogleMapsUrl } from '@/lib/format';
+import { MapPin, ExternalLink } from 'lucide-react';
 
 export interface CustomerAddressesCardProps {
   customer: CustomerRecord;
@@ -24,27 +25,41 @@ export function CustomerAddressesCard({ customer }: CustomerAddressesCardProps) 
           <p className="text-sm text-muted-foreground">No saved addresses.</p>
         ) : (
           <ul className="space-y-4">
-            {addresses.map((addr) => (
-              <li
-                key={addr.id}
-                className="rounded-lg border bg-muted/40 p-3 text-sm"
-              >
-                <div className="font-medium">
-                  {addr.label}
-                  {addr.isDefault && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      (default)
-                    </span>
+            {addresses.map((addr) => {
+              const mapsUrl = getGoogleMapsUrl(addr.addressLine, addr.pincode);
+              return (
+                <li
+                  key={addr.id}
+                  className="rounded-lg border bg-muted/40 p-3 text-sm"
+                >
+                  <div className="font-medium">
+                    {addr.label}
+                    {addr.isDefault && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        (default)
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-muted-foreground">
+                    {addr.addressLine}
+                  </div>
+                  <div className="mt-0.5 text-muted-foreground">
+                    Pincode: {addr.pincode}
+                  </div>
+                  {mapsUrl && (
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      View on Google Maps
+                    </a>
                   )}
-                </div>
-                <div className="mt-1 text-muted-foreground">
-                  {addr.addressLine}
-                </div>
-                <div className="mt-0.5 text-muted-foreground">
-                  Pincode: {addr.pincode}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </CardContent>

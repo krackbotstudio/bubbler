@@ -561,7 +561,7 @@ export function InvoiceBuilder({
                         <td className="py-1">
                           {canEdit ? (
                             <select
-                              className="h-8 w-full max-w-[120px] rounded border px-1 text-sm"
+                              className="h-8 w-full max-w-[120px] rounded border pl-2 pr-6 text-sm"
                               value={row.segmentCategoryId}
                               onChange={(e) => {
                                 const newSegId = e.target.value;
@@ -584,7 +584,7 @@ export function InvoiceBuilder({
                         <td className="py-1">
                           {canEdit ? (
                             <select
-                              className="h-8 w-full max-w-[120px] rounded border px-1 text-sm"
+                              className="h-8 w-full max-w-[120px] rounded border pl-2 pr-6 text-sm"
                               value={row.serviceCategoryId}
                               onChange={(e) => updateLine(i, { serviceCategoryId: e.target.value })}
                             >
@@ -607,7 +607,7 @@ export function InvoiceBuilder({
                       <td className="py-1">
                         {canEdit ? (
                           <select
-                            className="h-8 w-full max-w-[120px] rounded border px-1 text-sm"
+                            className="h-8 w-full max-w-[120px] rounded border pl-2 pr-6 text-sm"
                             value={row.type}
                             onChange={(e) => updateLine(i, { type: e.target.value as InvoiceItemType })}
                           >

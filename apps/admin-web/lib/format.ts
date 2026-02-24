@@ -22,3 +22,10 @@ export function formatDateTime(iso: string): string {
     timeStyle: 'short',
   }).format(new Date(iso));
 }
+
+/** Build Google Maps search URL for an address (addressLine + pincode). */
+export function getGoogleMapsUrl(addressLine: string, pincode: string): string {
+  const query = [addressLine, pincode].filter(Boolean).join(', ');
+  if (!query.trim()) return '';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}

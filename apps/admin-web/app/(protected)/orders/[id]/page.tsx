@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceBuilder, type InvoiceLineRow } from '@/components/forms/InvoiceBuilder';
-import { formatMoney, formatDate } from '@/lib/format';
+import { formatMoney, formatDate, getGoogleMapsUrl } from '@/lib/format';
 import { getApiOrigin, getFriendlyErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { computeSubscriptionPreview, parseAckItems, parseAckKg } from '@/lib/subscription-preview';
@@ -31,6 +31,7 @@ import { ErrorDisplay } from '@/components/shared/ErrorDisplay';
 import type { OrderStatus, InvoiceOrderMode, PaymentProvider } from '@/types';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { ExternalLink } from 'lucide-react';
 
 const STATUS_FLOW: OrderStatus[] = [
   'BOOKING_CONFIRMED',
@@ -45,7 +46,8 @@ type OrderTab = 'ack' | 'final' | 'payment';
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const orderId = (typeof params?.id === 'string' ? params.id : (params?.id as string) ?? '') || '';
+  const rawId = params?.id;
+  const orderId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] ?? '' : '';
 
   const { data: summary, isLoading, error } = useOrderSummary(orderId || null);
   const updateStatus = useUpdateOrderStatus(orderId);
@@ -721,6 +723,20 @@ export default function OrderDetailPage() {
                 <p>{address.label}</p>
                 <p>{address.addressLine}</p>
                 <p>{address.pincode}</p>
+                {(() => {
+                  const mapsUrl = getGoogleMapsUrl(address.addressLine, address.pincode);
+                  return mapsUrl ? (
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      View on Google Maps
+                    </a>
+                  ) : null;
+                })()}
               </>
             )}
           </div>
@@ -937,7 +953,23 @@ export default function OrderDetailPage() {
                 </p>
               )}
               {order.orderSource !== 'WALK_IN' && (
-                <p>{address.addressLine}, {address.pincode}</p>
+                <p>
+                  {address.addressLine}, {address.pincode}
+                  {(() => {
+                    const mapsUrl = getGoogleMapsUrl(address.addressLine, address.pincode);
+                    return mapsUrl ? (
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1.5 inline-flex items-center gap-0.5 text-primary hover:underline text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Map
+                      </a>
+                    ) : null;
+                  })()}
+                </p>
               )}
               <p className="text-muted-foreground">
                 Pickup: {formatDate(order.pickupDate)} {order.timeWindow}
@@ -1281,7 +1313,23 @@ export default function OrderDetailPage() {
                 </p>
               )}
               {order.orderSource !== 'WALK_IN' && (
-                <p>{address.addressLine}, {address.pincode}</p>
+                <p>
+                  {address.addressLine}, {address.pincode}
+                  {(() => {
+                    const mapsUrl = getGoogleMapsUrl(address.addressLine, address.pincode);
+                    return mapsUrl ? (
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1.5 inline-flex items-center gap-0.5 text-primary hover:underline text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Map
+                      </a>
+                    ) : null;
+                  })()}
+                </p>
               )}
               <p className="text-muted-foreground">
                 Pickup: {formatDate(order.pickupDate)} {order.timeWindow}
