@@ -5,6 +5,8 @@ import './globals.css';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3003/api';
 const API_ORIGIN = API_BASE.startsWith('http') ? API_BASE.replace(/\/api\/?$/, '') : null;
 
+const FAVICON_FETCH_TIMEOUT_MS = 5000;
+
 export async function generateMetadata(): Promise<Metadata> {
   const base: Metadata = {
     title: 'Laundry Admin',
@@ -12,7 +14,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
   if (!API_ORIGIN) return base;
   try {
-    const res = await fetch(`${API_BASE}/branding/public`, { next: { revalidate: 300 } });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FAVICON_FETCH_TIMEOUT_MS);
+    const res = await fetch(`${API_BASE}/branding/public`, {
+      next: { revalidate: 300 },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
     const data = (await res.json()) as { logoUrl?: string | null };
     const logoUrl = data?.logoUrl;
     if (logoUrl && typeof logoUrl === 'string') {
@@ -20,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
       return { ...base, icons: { icon: iconUrl } };
     }
   } catch {
-    // ignore
+    // ignore (e.g. API unreachable at build time, timeout, or no logo)
   }
   return base;
 }
