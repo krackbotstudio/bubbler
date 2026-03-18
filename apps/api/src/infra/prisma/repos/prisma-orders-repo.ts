@@ -3,7 +3,7 @@ import {
   OrderStatus as PrismaOrderStatus,
   PaymentStatus as PrismaPaymentStatus,
   InvoiceType as PrismaInvoiceType,
-} from '../../generated/prisma-client';
+} from '@prisma/client';
 import type {
   CreateOrderInput,
   OrderRecord,

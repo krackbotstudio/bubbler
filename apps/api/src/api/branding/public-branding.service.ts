@@ -5,6 +5,8 @@ import { BRANDING_REPO } from '../../infra/infra.module';
 export interface PublicBrandingResponse {
   businessName: string | null;
   logoUrl: string | null;
+  /** App icon — used as mobile app icon and admin favicon. */
+  appIconUrl: string | null;
   /** Mobile app terms and conditions (for login acceptance). */
   termsAndConditions: string | null;
   /** Mobile app privacy policy (for login acceptance). */
@@ -24,10 +26,12 @@ export class PublicBrandingService {
     const branding = await this.brandingRepo.get();
     const updatedAt = branding?.updatedAt?.getTime();
     const logoUrl = branding?.logoUrl ?? null;
+    const appIconUrl = branding?.appIconUrl ?? null;
     const welcomeBackgroundUrl = branding?.welcomeBackgroundUrl ?? null;
     return {
       businessName: branding?.businessName ?? null,
       logoUrl: logoUrl && updatedAt != null ? `${logoUrl}${logoUrl.includes('?') ? '&' : '?'}v=${updatedAt}` : logoUrl,
+      appIconUrl: appIconUrl && updatedAt != null ? `${appIconUrl}${appIconUrl.includes('?') ? '&' : '?'}v=${updatedAt}` : appIconUrl,
       termsAndConditions: branding?.termsAndConditions ?? null,
       privacyPolicy: branding?.privacyPolicy ?? null,
       welcomeBackgroundUrl: welcomeBackgroundUrl && updatedAt != null ? `${welcomeBackgroundUrl}${welcomeBackgroundUrl.includes('?') ? '&' : '?'}v=${updatedAt}` : welcomeBackgroundUrl,

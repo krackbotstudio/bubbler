@@ -15,6 +15,7 @@ export interface BrandingSettingsRecord {
   termsAndConditions: string | null;
   privacyPolicy: string | null;
   welcomeBackgroundUrl: string | null;
+  appIconUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,4 +41,5 @@ export interface BrandingRepo {
   setLogoUrl(url: string | null): Promise<void>;
   setUpiQrUrl(url: string | null): Promise<void>;
   setWelcomeBackgroundUrl(url: string | null): Promise<void>;
+  setAppIconUrl(url: string | null): Promise<void>;
 }

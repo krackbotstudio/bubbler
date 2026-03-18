@@ -21,10 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-    const data = (await res.json()) as { logoUrl?: string | null };
-    const logoUrl = data?.logoUrl;
-    if (logoUrl && typeof logoUrl === 'string') {
-      const iconUrl = logoUrl.startsWith('http') ? logoUrl : `${API_ORIGIN}${logoUrl}`;
+    const data = (await res.json()) as { logoUrl?: string | null; appIconUrl?: string | null };
+    const rawIcon = data?.appIconUrl ?? data?.logoUrl;
+    if (rawIcon && typeof rawIcon === 'string') {
+      const iconUrl = rawIcon.startsWith('http') ? rawIcon : `${API_ORIGIN}${rawIcon}`;
       return { ...base, icons: { icon: iconUrl } };
     }
   } catch {

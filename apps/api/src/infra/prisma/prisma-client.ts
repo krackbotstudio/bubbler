@@ -1,5 +1,4 @@
-// Use explicit path so runtime always loads our generated client (with Branch gstNumber/panNumber etc.)
-import { PrismaClient } from '../generated/prisma-client';
+import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 

@@ -26,6 +26,7 @@ function toRecord(row: {
   termsAndConditions: string | null;
   privacyPolicy: string | null;
   welcomeBackgroundUrl: string | null;
+  appIconUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): BrandingSettingsRecord {
@@ -46,6 +47,7 @@ function toRecord(row: {
     termsAndConditions: row.termsAndConditions ?? null,
     privacyPolicy: row.privacyPolicy ?? null,
     welcomeBackgroundUrl: row.welcomeBackgroundUrl ?? null,
+    appIconUrl: row.appIconUrl ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -115,6 +117,13 @@ export class PrismaBrandingRepo implements BrandingRepo {
     await this.prisma.brandingSettings.update({
       where: { id: BRANDING_ID },
       data: { welcomeBackgroundUrl: url },
+    });
+  }
+
+  async setAppIconUrl(url: string | null): Promise<void> {
+    await this.prisma.brandingSettings.update({
+      where: { id: BRANDING_ID },
+      data: { appIconUrl: url },
     });
   }
 }

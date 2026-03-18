@@ -88,4 +88,14 @@ export class AdminBrandingController {
     }
     return this.adminBrandingService.uploadWelcomeBackground(file.buffer, file.originalname ?? 'welcome-bg');
   }
+
+  @Post('app-icon')
+  @Roles(Role.ADMIN, Role.BILLING)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAppIcon(@UploadedFile() file: MulterUploadFile) {
+    if (!file?.buffer) {
+      throw new BadRequestException('File is required');
+    }
+    return this.adminBrandingService.uploadAppIcon(file.buffer, file.originalname ?? 'app-icon');
+  }
 }

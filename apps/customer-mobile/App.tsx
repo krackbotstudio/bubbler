@@ -2546,10 +2546,15 @@ export default function App() {
                 {invoiceError ? (
                   <Text style={[styles.error, { marginBottom: 8 }]}>{invoiceError}</Text>
                 ) : null}
-                {orderInvoices.length === 0 ? (
-                  <Text style={styles.muted}>No invoices yet.</Text>
-                ) : (
-                  orderInvoices.map((inv) => {
+                {(() => {
+                  const hasFinal = orderInvoices.some((i) => i.type === 'FINAL');
+                  const invoicesToShow = hasFinal
+                    ? orderInvoices.filter((i) => i.type === 'FINAL')
+                    : orderInvoices;
+                  return invoicesToShow.length === 0 ? (
+                    <Text style={styles.muted}>No invoices yet.</Text>
+                  ) : (
+                    invoicesToShow.map((inv) => {
                     const isLoading = invoiceLoadingId === inv.id;
                     const items = inv.items ?? [];
                     const discountPaise = inv.discountPaise ?? 0;
@@ -2640,30 +2645,12 @@ export default function App() {
                         ) : (
                           <Text style={styles.muted}>Total: ₹{(inv.total / 100).toFixed(2)}</Text>
                         )}
-                        <View style={styles.invoiceActions}>
-                          <TouchableOpacity
-                            style={[styles.invoiceCta, styles.invoiceCtaDownload, isLoading && styles.buttonDisabled]}
-                            onPress={() => openInvoice('download')}
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <ActivityIndicator size="small" color={colors.primary} />
-                            ) : (
-                              <Text style={styles.invoiceCtaText}>Download</Text>
-                            )}
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.invoiceCta, styles.invoiceCtaShare, isLoading && styles.buttonDisabled]}
-                            onPress={() => openInvoice('share')}
-                            disabled={isLoading}
-                          >
-                            <Text style={[styles.invoiceCtaText, { color: colors.white }]}>Share</Text>
-                          </TouchableOpacity>
-                        </View>
                       </View>
                     );
                   })
-                )}
+                );
+                }
+                )()}
               </>
             ) : (
               <Text style={styles.muted}>Loading…</Text>

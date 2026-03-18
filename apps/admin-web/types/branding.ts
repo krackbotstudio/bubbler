@@ -17,6 +17,8 @@ export interface BrandingSettings {
   privacyPolicy: string | null;
   /** Welcome screen background (mobile app, 50% opacity). */
   welcomeBackgroundUrl: string | null;
+  /** App icon — used as mobile app icon and admin favicon. */
+  appIconUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

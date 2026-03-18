@@ -91,3 +91,19 @@ export function useUploadWelcomeBackground() {
     },
   });
 }
+
+export function useUploadAppIcon() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return api.post<BrandingSettings>('/admin/branding/app-icon', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then((r) => r.data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'branding'] });
+    },
+  });
+}

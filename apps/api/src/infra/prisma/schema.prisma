@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma-client"
 }
 
 datasource db {
@@ -467,6 +466,8 @@ model BrandingSettings {
   privacyPolicy      String?
   /** Mobile app welcome screen background image (shown at 50% opacity). */
   welcomeBackgroundUrl String?
+  /** App icon — used as mobile app icon and admin favicon. */
+  appIconUrl           String?
 }
 
 /** Home page carousel: up to 3 images, position 1–3. */

@@ -66,4 +66,15 @@ export class AdminBrandingService {
     await this.brandingRepo.setWelcomeBackgroundUrl(url);
     return this.get();
   }
+
+  async uploadAppIcon(buffer: Buffer, originalName: string) {
+    const safeName = sanitizeOriginalName(originalName);
+    const fileName = `app-icon-${Date.now()}-${safeName}`;
+    const pathKey = `branding/${fileName}`;
+    const contentType = contentTypeFromExt(originalName);
+    const publicUrl = await this.storageAdapter.putObject(pathKey, buffer, contentType);
+    const url = (typeof publicUrl === 'string' ? publicUrl : null) ?? `/api/assets/branding/${fileName}`;
+    await this.brandingRepo.setAppIconUrl(url);
+    return this.get();
+  }
 }

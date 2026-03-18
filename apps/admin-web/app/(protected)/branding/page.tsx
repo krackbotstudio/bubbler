@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormField } from '@/components/ui/form-field';
-import { useBranding, useUpdateBranding, useUploadLogo, useUploadUpiQr, useUploadWelcomeBackground } from '@/hooks/useBranding';
+import { useBranding, useUpdateBranding, useUploadLogo, useUploadUpiQr, useUploadWelcomeBackground, useUploadAppIcon } from '@/hooks/useBranding';
 import { useBranches, useDeleteBranch } from '@/hooks/useBranches';
 import { useCarousel, useUploadCarouselImage, useRemoveCarouselImage } from '@/hooks/useCarousel';
 import { getApiOrigin } from '@/lib/api';
@@ -54,6 +54,7 @@ export default function BrandingPage() {
   const uploadLogo = useUploadLogo();
   const uploadUpiQr = useUploadUpiQr();
   const uploadWelcomeBackground = useUploadWelcomeBackground();
+  const uploadAppIcon = useUploadAppIcon();
 
   const [businessName, setBusinessName] = useState('');
   const [address, setAddress] = useState('');
@@ -182,6 +183,21 @@ export default function BrandingPage() {
   const logoPreviewUrl = branding?.logoUrl ? imageUrl(branding.logoUrl) : null;
   const upiQrPreviewUrl = branding?.upiQrUrl ? imageUrl(branding.upiQrUrl) : null;
   const welcomeBgPreviewUrl = branding?.welcomeBackgroundUrl ? imageUrl(branding.welcomeBackgroundUrl) : null;
+  const appIconPreviewUrl = branding?.appIconUrl ? imageUrl(branding.appIconUrl) : null;
+
+  const handleAppIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file.');
+      return;
+    }
+    e.target.value = '';
+    uploadAppIcon.mutate(file, {
+      onSuccess: () => toast.success('App icon uploaded'),
+      onError: (err) => toast.error((err as Error).message),
+    });
+  };
 
   const handleAddBranch = () => {
     setEditingBranch(null);
@@ -457,37 +473,37 @@ export default function BrandingPage() {
               </div>
 
               <div className="border-t pt-6 space-y-4">
-                <span className="text-sm font-medium">Welcome page background (mobile app)</span>
+                <span className="text-sm font-medium">App Icon</span>
                 <p className="text-xs text-muted-foreground">
-                  Shown behind the login screen at 50% opacity. Leave empty for no background.
+                  Used as the mobile app icon and admin panel favicon. Use a square PNG (recommended 1024×1024).
                 </p>
-                {welcomeBgPreviewUrl && (
+                {appIconPreviewUrl && (
                   <img
-                    src={welcomeBgPreviewUrl}
-                    alt="Welcome background"
-                    className="h-24 w-full max-w-[280px] rounded object-cover border"
+                    src={appIconPreviewUrl}
+                    alt="App Icon"
+                    className="h-20 w-20 rounded-xl border object-contain"
                   />
                 )}
                 <RoleGate role={role} gate="brandingEdit">
                   <input
-                    id="welcome-bg-upload"
+                    id="app-icon-upload"
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={handleWelcomeBackgroundChange}
-                    disabled={uploadWelcomeBackground.isPending}
+                    onChange={handleAppIconChange}
+                    disabled={uploadAppIcon.isPending}
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={uploadWelcomeBackground.isPending}
-                    onClick={() => document.getElementById('welcome-bg-upload')?.click()}
+                    disabled={uploadAppIcon.isPending}
+                    onClick={() => document.getElementById('app-icon-upload')?.click()}
                   >
-                    {uploadWelcomeBackground.isPending ? (
+                    {uploadAppIcon.isPending ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading…</>
                     ) : (
-                      welcomeBgPreviewUrl ? 'Replace welcome background' : 'Upload welcome background'
+                      appIconPreviewUrl ? 'Replace app icon' : 'Upload app icon'
                     )}
                   </Button>
                 </RoleGate>

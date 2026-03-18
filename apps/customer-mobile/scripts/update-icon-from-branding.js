@@ -3,10 +3,15 @@
  * Run from repo root: node apps/customer-mobile/scripts/update-icon-from-branding.js
  * Requires: EXPO_PUBLIC_API_URL in .env (e.g. https://your-api.onrender.com or http://localhost:3006)
  * Ensure a logo is uploaded in admin branding first.
+ *
+ * When branding fetch or logo download fails (e.g. API down or cold start), the script
+ * exits 0 so the build continues using existing assets. Set SKIP_ICON_UPDATE=1 to skip the update entirely.
  */
 
 const fs = require('fs');
 const path = require('path');
+
+const SKIP_ENV = 'SKIP_ICON_UPDATE';
 
 function readEnvVar(envPath, key) {
   if (!fs.existsSync(envPath)) return null;
@@ -16,7 +21,25 @@ function readEnvVar(envPath, key) {
   return m[1].trim().replace(/^["']|["']$/g, '').split('#')[0].trim();
 }
 
+/** Fatal: missing config, script cannot run. */
+function fatal(message) {
+  console.error(message);
+  process.exit(1);
+}
+
+/** Non-fatal: API/download failed; build should continue with existing assets. */
+function softFail(message) {
+  console.error(message);
+  console.warn('(Build will continue using existing icon assets.)');
+  process.exit(0);
+}
+
 async function main() {
+  if (process.env[SKIP_ENV] === '1' || process.env[SKIP_ENV] === 'true') {
+    console.log('Skipping icon update (SKIP_ICON_UPDATE is set).');
+    process.exit(0);
+  }
+
   const appDir = path.resolve(__dirname, '..');
   const rootDir = path.resolve(__dirname, '../../..');
   const appEnv = path.join(appDir, '.env');
@@ -26,9 +49,7 @@ async function main() {
   const directLogoUrl = cliUrl || readEnvVar(appEnv, 'UPDATE_ICON_LOGO_URL') || process.env.UPDATE_ICON_LOGO_URL || readEnvVar(rootEnv, 'UPDATE_ICON_LOGO_URL');
   let API_BASE = readEnvVar(appEnv, 'EXPO_PUBLIC_API_URL') || readEnvVar(rootEnv, 'EXPO_PUBLIC_API_URL') || process.env.EXPO_PUBLIC_API_URL || '';
   if (!directLogoUrl && !API_BASE) {
-    console.error('Set EXPO_PUBLIC_API_URL or UPDATE_ICON_LOGO_URL in apps/customer-mobile/.env');
-    console.error('Or pass the logo URL: npm run update-icon-from-branding -- <API_BASE>/api/assets/branding/logo.png');
-    process.exit(1);
+    fatal('Set EXPO_PUBLIC_API_URL or UPDATE_ICON_LOGO_URL in apps/customer-mobile/.env\nOr pass the logo URL: npm run update-icon-from-branding -- <API_BASE>/api/assets/branding/logo.png');
   }
   const base = API_BASE ? API_BASE.replace(/\/$/, '') : '';
   let fullUrl;
@@ -38,30 +59,39 @@ async function main() {
   } else {
     const brandingUrl = `${base}/api/branding/public`;
     console.log('Fetching branding from', brandingUrl);
-    const res = await fetch(brandingUrl);
+    let res;
+    try {
+      res = await fetch(brandingUrl);
+    } catch (e) {
+      softFail(`Could not reach branding API: ${e.message}`);
+    }
     if (!res.ok) {
       if (res.status === 404) {
-        console.error('GET /api/branding/public returned 404.');
-        console.error('Use a direct logo URL instead:');
-        console.error('  npm run update-icon-from-branding -- <API_BASE>/api/assets/branding/YOUR_FILE.png');
-        console.error('(Get YOUR_FILE from the admin branding screen, or try logo.png / weyou-logo.png)');
+        softFail('GET /api/branding/public returned 404. Use a direct logo URL or upload a logo in admin branding.');
       } else {
-        console.error('Branding API returned', res.status, '- is the API running and does branding have a logo?');
+        softFail(`Branding API returned ${res.status}. Is the API running?`);
       }
-      process.exit(1);
     }
-    const data = await res.json();
-    const logoUrl = data.logoUrl;
-    if (!logoUrl || !logoUrl.trim()) {
-      console.error('No logoUrl in branding. Upload a logo in the admin branding settings, or set UPDATE_ICON_LOGO_URL in .env to the full logo image URL.');
-      process.exit(1);
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      softFail(`Invalid JSON from branding API: ${e.message}`);
+    }
+    const logoUrl = data && data.logoUrl;
+    if (!logoUrl || !String(logoUrl).trim()) {
+      softFail('No logoUrl in branding. Upload a logo in admin or set UPDATE_ICON_LOGO_URL.');
     }
     fullUrl = logoUrl.startsWith('http') ? logoUrl : `${base}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`;
   }
-  const imgRes = await fetch(fullUrl);
+  let imgRes;
+  try {
+    imgRes = await fetch(fullUrl);
+  } catch (e) {
+    softFail(`Failed to download logo: ${e.message}`);
+  }
   if (!imgRes.ok) {
-    console.error('Failed to download logo:', imgRes.status, fullUrl);
-    process.exit(1);
+    softFail(`Failed to download logo: ${imgRes.status} ${fullUrl}`);
   }
   const buf = Buffer.from(await imgRes.arrayBuffer());
   const assetsDir = path.join(__dirname, '..', 'assets');
@@ -80,5 +110,6 @@ async function main() {
 
 main().catch((e) => {
   console.error(e);
-  process.exit(1);
+  console.warn('(Build will continue using existing icon assets.)');
+  process.exit(0);
 });
