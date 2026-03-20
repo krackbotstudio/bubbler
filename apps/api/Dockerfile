@@ -32,10 +32,12 @@ COPY package.json package-lock.json ./
 # Install production deps only
 RUN npm ci --omit=dev --ignore-scripts
 
-# Copy tsconfig-paths from builder (it's a devDep but required at runtime for @shared/* resolution)
-# Copying directly avoids npm workspace resolution issues when re-installing in runner
+# Copy tsconfig-paths + all its dependencies from builder
+# (tsconfig-paths is a devDep; re-installing via npm fails in workspace monorepos)
 COPY --from=builder /app/node_modules/tsconfig-paths ./node_modules/tsconfig-paths
+COPY --from=builder /app/node_modules/json5 ./node_modules/json5
 COPY --from=builder /app/node_modules/strip-bom ./node_modules/strip-bom
+COPY --from=builder /app/node_modules/minimist ./node_modules/minimist
 
 # Copy compiled API output
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
