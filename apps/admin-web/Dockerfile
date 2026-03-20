@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install dependencies (skip optional win32 native binaries)
-RUN npm ci --ignore-scripts --omit=optional
+RUN npm install --ignore-scripts --omit=optional
 
 # Copy the rest of the app source
 COPY . .
