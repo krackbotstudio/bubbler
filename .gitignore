@@ -30,6 +30,14 @@ yarn-error.log*
 .cursor/mcp.json
 *.swp
 *.swo
+.claude
+.agent
+.cursor
+.agents
+.expo
+.expo-shared
+
+
 
 # OS
 .DS_Store

@@ -4,6 +4,7 @@ const useProxy = apiUrl.includes('onrender.com');
 
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   /** Allow slower static generation on CI (e.g. Render) where metadata or data fetches can be slow. */
   staticPageGenerationTimeout: 120,
   async rewrites() {
