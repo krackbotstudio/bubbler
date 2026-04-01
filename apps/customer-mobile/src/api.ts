@@ -641,6 +641,7 @@ export interface OrderInvoice {
   branchPhone?: string | null;
   gstNumber?: string | null;
   panNumber?: string | null;
+  footerNote?: string | null;
   items?: OrderInvoiceItem[];
 }
 

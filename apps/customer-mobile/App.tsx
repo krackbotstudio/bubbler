@@ -599,7 +599,6 @@ export default function App() {
   const buildFinalInvoiceHtml = useCallback(
     async (inv: OrderInvoice, ackInvoice?: OrderInvoice | null): Promise<string> => {
       const b = welcomeBranding;
-      const businessName = b?.businessName?.trim() || 'WeYou';
       const logoUrl = b?.logoUrl ? (brandingLogoFullUrl(b.logoUrl) ?? null) : null;
       const logoDataUri = logoUrl ? await imageToDataUri(logoUrl) : null;
 
@@ -656,12 +655,10 @@ export default function App() {
       const issuedStrEscaped = escapeHtml(issuedStr);
 
       const branchAddressFull = inv.branchAddress?.trim() || b?.address?.trim() || '';
-      const branchName = branchAddressFull ? branchAddressFull.split(',')[0]?.trim() || '' : '';
+      const branchPhone = inv.branchPhone?.trim() || '';
 
       const gstValue = (inv.gstNumber ?? b?.gstNumber)?.trim();
-      const panValue = (inv.panNumber ?? b?.panNumber)?.trim();
       const gstLineEscaped = gstValue ? escapeHtml(`GST: ${gstValue}`) : '';
-      const panLineEscaped = panValue ? escapeHtml(`PAN: ${panValue}`) : '';
 
       const useMatrix = items.some((it) => Boolean(it.segmentLabel || it.serviceLabel));
 
@@ -673,14 +670,8 @@ export default function App() {
       const ackIssuedStrEscaped = ackIssuedStr ? escapeHtml(ackIssuedStr) : null;
       const ackSubtotalPaise = ackInvoice ? ackInvoice.subtotal ?? ackInvoice.total : null;
 
-      const footerLocation = branchName || branchAddressFull;
-      const footerEmail = inv.branchEmail?.trim() || '';
-      const footerPhone = inv.branchPhone?.trim() || '';
-      const footerLine = [footerLocation, footerEmail, footerPhone]
-        .map((p) => (p ? p.trim() : ''))
-        .filter(Boolean)
-        .map((p) => escapeHtml(p))
-        .join(' · ');
+      const footerNote = inv.footerNote?.trim() || '';
+      const footerLine = footerNote ? escapeHtml(footerNote) : '';
 
       const termsText = b?.termsAndConditions?.trim() ?? '';
 
@@ -702,12 +693,9 @@ export default function App() {
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; background: #fdf2f8; color: #111827; }
       .page { padding: 24px; }
       .invoice { background: #fff; max-width: 720px; margin: 0 auto; padding: 24px; }
-      .topRow { display: flex; gap: 16px; align-items: flex-start; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }
-      .logo { width: 56px; height: 56px; border-radius: 12px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
-      .logo img { width: 100%; height: 100%; object-fit: contain; object-position: left top; }
-      .biz { flex: 1; min-width: 0; }
-      .bizName { font-size: 18px; font-weight: 800; margin: 0; }
-      .bizBranch { font-size: 14px; color: #6b7280; margin: 4px 0 0; font-weight: 600; }
+      .topRow { display: flex; justify-content: center; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }
+      .logo { width: 124px; height: 124px; border-radius: 12px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; overflow: hidden; flex: none; }
+      .logo img { width: 100%; height: 100%; object-fit: contain; }
       .headerBlocks { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; margin-top: 16px; }
       .infoBox { border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 6px; padding: 10px 12px; font-size: 13px; }
       .infoBoxLabel { font-weight: 800; margin: 0 0 4px; }
@@ -718,7 +706,6 @@ export default function App() {
       .orderText { margin: 4px 0 0; font-size: 13px; color: #111827; }
       .orderMuted { margin: 4px 0 0; font-size: 13px; color: #6b7280; }
       .orderRight { flex: 1 1 180px; text-align: right; font-size: 13px; color: #6b7280; }
-      .branchName { font-weight: 900; color: #111827; margin-top: 6px; }
       table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
       thead th { padding: 10px 6px 8px; color: #6b7280; font-size: 12px; font-weight: 800; text-align: left; border-bottom: 1px solid #e5e7eb; }
       tbody td { padding: 10px 6px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
@@ -744,10 +731,6 @@ export default function App() {
                 ? `<img src="${logoDataUri}" alt="Logo" />`
                 : `<span style="font-size:12px;color:#6b7280;">Logo</span>`
             }
-          </div>
-          <div class="biz">
-            <p class="bizName">${escapeHtml(businessName)}</p>
-            ${branchName ? `<p class="bizBranch">${escapeHtml(branchName)}</p>` : ''}
           </div>
         </div>
 
@@ -791,13 +774,13 @@ export default function App() {
           </div>
 
           <div class="orderRight">
-            ${panLineEscaped ? `<p>${panLineEscaped}</p>` : ''}
             ${gstLineEscaped ? `<p>${gstLineEscaped}</p>` : ''}
             ${
               branchAddressFull
-                ? `${branchName ? `<p class="branchName">${escapeHtml(branchName)}</p>` : ''}<p>${escapeHtml(branchAddressFull)}</p>`
+                ? `<p>${escapeHtml(branchAddressFull)}</p>`
                 : ''
             }
+            ${branchPhone ? `<p>Phone: ${escapeHtml(branchPhone)}</p>` : ''}
           </div>
         </div>
 
