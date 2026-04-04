@@ -22,6 +22,7 @@ Use this file to track setup and code changes as you do them. Update the **Statu
 | 16 | Admin web + API | **Orders** list: search + filter cleanup | ✅ Done | Search (debounced) on order id, customer name, phone; removed Status / Service / Pincode UI; `GET /admin/orders?search=…`. See `IMPLEMENTED_CHANGES_REFERENCE.md` |
 | 17 | Customer PWA + Mobile | Final invoice — remove **Download** | ✅ Done | Order detail → Invoices: no Download CTA on Final invoice; removed HTML/PDF helper code path. Re-export PWA to refresh `customer-pwa/dist`. `apps/customer-mobile/App.tsx` |
 | 18 | API + Admin web | **AGENT** role (branch-scoped staff) | ✅ Done | `AGENT_ROLE` in guards/controllers; branch filter locked for OPS/AGENT; dashboard KPIs/analytics banner behaviour for branch-scoped roles. Enum `AGENT` in DB — run migrate / `db:ensure-role-agent` if needed |
+| 19 | Customer PWA | **Favicon + manifest icons** from Admin Branding **app icon** | ✅ Done | `npm run build` runs `update-icon-from-branding.js` then export; `postexport-pwa.js` fetches `/api/branding/public` (`appIconUrl`, else `logoUrl`) into `dist/`. `npm run sync-icons` for dev. See `IMPLEMENTED_CHANGES_REFERENCE.md` |
 
 **Legend:** ⬜ Pending · 🔄 In progress · ✅ Done · ⏭️ Skipped
 
@@ -71,6 +72,8 @@ Use this file to track setup and code changes as you do them. Update the **Statu
 
 - **2026-04-04** — **Admin AGENT role:** Backend uses `apps/api/src/api/common/agent-role.ts` (`AGENT_ROLE`) so Nest metadata keeps the enum reference; `@Roles` updated across admin/customer-facing staff endpoints. `effectiveBranchIdForAdminQuery` / `isBranchScopedStaffRole` treat **OPS** and **AGENT** as branch-scoped. **Admin web:** `isBranchScopedStaff`, locked branch select on orders/walk-in/feedback/etc.; **dashboard** skips `useDashboardKpis` (and related empty-state noise) for branch-scoped staff and hides extra KPIs as designed. **Postgres:** ensure enum value `AGENT` exists (`db:ensure-role-agent` / migration) before assigning the role.
 
+- **2026-04-04** — **Customer PWA favicon / install icons:** Tab favicon and PWA manifest icons use the **Admin Branding app icon** (`appIconUrl` from `GET /api/branding/public`, else `logoUrl`). **`apps/customer-pwa/package.json`:** `build` runs `../customer-mobile/scripts/update-icon-from-branding.js` before `expo export`, then `scripts/postexport-pwa.js`. **Post-export** re-fetches the same image into `dist/icon-192.png`, `dist/icon-512.png`, `dist/favicon.png`, sets `<link rel="icon" type="image/png" href="/favicon.png">`, **`apple-touch-icon`** → `/icon-192.png`, and updates `manifest.json`. **`npm run sync-icons`** in `customer-pwa` refreshes `customer-mobile/assets` for `expo start --web` without a full build. Env: `EXPO_PUBLIC_API_URL` in `customer-mobile` / `customer-pwa` / root `.env` or process env (Docker build-arg). **`apps/customer-pwa/.env.example`** documents build-time use.
+
 ---
 
 ## Ideas / follow-ups (optional)
@@ -80,4 +83,4 @@ Use this file to track setup and code changes as you do them. Update the **Statu
 
 ---
 
-*Last updated: 2026-04-04 — Added admin Orders search + filter cleanup, customer Final invoice download removal, AGENT role notes; see new table rows 16–18 and latest “2026-04-04” bullets.*
+*Last updated: 2026-04-04 — Includes PWA favicon from branding (table row 19); see rows 16–19 and “2026-04-04” bullets.*
