@@ -44,7 +44,7 @@ const manifest = {
   start_url: './',
   scope: './',
   display: 'standalone',
-  background_color: '#ffffff',
+  background_color: '#3d0f3d',
   theme_color: '#7a2d7a',
   icons: [
     { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -128,6 +128,33 @@ if (!hasSwRegister) {
     }
   </script>
 </body>`
+  );
+}
+
+// Full-viewport background on mobile (avoids light strips above/below; matches login gradient).
+if (!indexHtml.includes('weyou-viewport-fill')) {
+  indexHtml = indexHtml.replace(
+    /<meta\s+name="viewport"[^>]*\/?>/i,
+    '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />'
+  );
+  indexHtml = indexHtml.replace(
+    '</head>',
+    `  <style id="weyou-viewport-fill">
+      html, body {
+        min-height: 100%;
+        min-height: 100dvh;
+        height: 100%;
+        background-color: #3d0f3d;
+      }
+      #root {
+        min-height: 100%;
+        min-height: 100dvh;
+        display: flex;
+        flex: 1;
+        background-color: #3d0f3d;
+      }
+    </style>
+</head>`
   );
 }
 

@@ -1,9 +1,19 @@
 # Implemented Changes Reference
 
-Date: 2026-03-30  
+Date: 2026-03-30 (updated 2026-04-04)  
 Project: Weyouprod monorepo
 
 ## Customer app (PWA + Mobile)
+
+- **Order detail — Final invoice:** Removed the **Download** action from the **Final** invoice card (under line items / total). Customers still see the full on-screen invoice; subscription plan **invoice preview** still offers Download / Print / Share where applicable. Implementation: `apps/customer-mobile/App.tsx` (removed `openInvoice` download path for FINAL, `buildFinalInvoiceHtml`, `escapeHtml`, `imageToDataUri` + cache, static `expo-print` import). **Customer PWA** uses the same bundle — **rebuild/export** `apps/customer-pwa` after pulling so `dist/` is current.
+
+- **Auth / layout (earlier):** Login and full-bleed purple background on mobile/PWA (safe areas, `100dvh`, viewport-fit) — see `App.tsx`, `customer-pwa` post-export script / `dist` assets when redeployed.
+
+- **Book Now — Select services:** Added **Home linen** as the sixth service tile (`HOME_LINEN`), after Steam Iron, in `apps/customer-mobile/src/types.ts` (`SERVICE_TYPES` + `ServiceTypeId`). Applies to **native** and **customer PWA** (PWA imports `../customer-mobile/App`).
+
+- **Add / Edit address — Google Maps (`App.tsx`):**
+  - **PWA (web):** Hides **“Search location on Google Maps”** / **“Open Google Maps to search”** (`hideGoogleMapsSearchRow`). Optional **Google Maps link** text field remains for paste; **not required** on save (`Platform.OS === 'web'`). Empty `googleMapUrl` sent as `null`.
+  - **All platforms:** Removed the **“Use Google Maps link”** button under the form; only the optional URL input remains (less confusing). Native still has the top **Open Google Maps to search** flow and map modal **Add to Address** for auto-fill.
 
 - Updated customer order confirmation/details UI to highlight key info for readability:
   - Date format like `01 APRIL 2026`
@@ -71,6 +81,23 @@ Project: Weyouprod monorepo
   - Deduplicates input values
   - Creates all valid entries in one submit
   - Shows partial success and failure summary
+
+## Admin Orders (list page)
+
+- **Search:** Single field (debounced ~400ms) filters by **order id**, **customer name**, or **customer phone** (partial, case-insensitive on text fields; phone also tries a **digits-only** substring when the query is mixed, e.g. `+91 …`).
+- **Removed filters** from the main Orders UI: **Status**, **Pincode**, **Service** (API still accepts those query params for other callers).
+- **Unchanged:** date range (initiated / pickup / delivered window), branch selector (locked for branch-scoped staff).
+- **Order ID column:** Shared `AdminOrderListOrderIdCell` on main Orders and walk-in lists for consistent truncation/wrapping.
+- **Files:** `apps/admin-web/app/(protected)/orders/page.tsx`, `apps/admin-web/hooks/useOrders.ts`, `apps/admin-web/types/order.ts`, `components/shared/AdminOrderListOrderIdCell.tsx`.
+- **API:** `GET /admin/orders?search=…` — `AdminListOrdersQueryDto.search` (max 120 chars), `AdminOrdersFilters.search`, implemented in `apps/api/src/infra/prisma/repos/prisma-orders-repo.ts` (`adminList` adds an `AND` + `OR` on order `id`, related `user.name`, `user.phone`). Controller: `admin-orders.controller.ts`. Port: `application/ports/orders-repo.port.ts`. In-memory fake filters by id substring for tests.
+
+## Admin — AGENT role (branch-scoped staff)
+
+- **`AGENT`** admin user type (e.g. branch head): shared literal `AGENT_ROLE` in `apps/api/src/api/common/agent-role.ts` so decorator metadata matches the Prisma/TS `Role` enum (avoids stale `undefined` role bugs).
+- **Branch scope:** `effectiveBranchIdForAdminQuery` / `isBranchScopedStaffRole` — **OPS** and **AGENT** with an assigned `branchId` are limited to that branch on list endpoints.
+- **Controllers** using `@Roles(..., AGENT_ROLE)` include admin orders, walk-in, invoices, payments, feedback, analytics reads, catalog read, etc. (see codebase for full set).
+- **Admin web:** `isBranchScopedStaff` / `isBranchFilterLocked` in `lib/auth.ts`; locked branch UI on relevant pages; **dashboard** avoids `useDashboardKpis` when branch-scoped and adjusts KPI visibility.
+- **Database:** Postgres enum `Role` must include `AGENT` — use migration or `npm run db:ensure-role-agent` / `scripts/ensure-role-agent-enum.ts` (direct DB URL often required for `ALTER TYPE`).
 
 ## Admin Orders (detail page + invoice)
 
@@ -143,4 +170,5 @@ Project: Weyouprod monorepo
 
 - All implemented changes were lint-checked on touched files during implementation.
 - This file is intended as a practical future reference for what was changed in this cycle.
+- **Changelog-style steps** (setup checklist + dated bullets): see `INCREMENTAL_CHANGES_LOG.md`.
 
