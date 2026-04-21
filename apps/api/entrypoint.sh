@@ -6,6 +6,15 @@ set -e
 
 echo "🚀 Starting Weyou API container..."
 
+# Display database connection info (hide password)
+if [ -n "$DATABASE_URL" ]; then
+    DB_HOST=$(echo "$DATABASE_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
+    echo "📊 Database host: $DB_HOST"
+    echo "🔐 SSL mode: $(echo "$DATABASE_URL" | grep -o 'sslmode=[^&]*' || echo 'not specified')"
+else
+    echo "⚠️  DATABASE_URL not set!"
+fi
+
 # Check if we should run migrations first
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "📦 RUN_MIGRATIONS is set to true"
