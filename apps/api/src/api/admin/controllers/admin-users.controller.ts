@@ -51,7 +51,23 @@ export class AdminUsersController {
   @Post()
   @Roles(Role.ADMIN, Role.PARTIAL_ADMIN, Role.OPS)
   async create(@Body() dto: CreateAdminUserDto, @Req() req: { user: AuthUser }) {
-    return this.adminUsersService.create(
+    // eslint-disable-next-line no-console
+    console.log('[AdminUsersController.create] Received request', {
+      dto: {
+        email: dto.email,
+        role: dto.role,
+        branchId: dto.branchId,
+        branchIds: dto.branchIds,
+        isActive: dto.isActive,
+      },
+      actor: {
+        id: req.user.id,
+        role: req.user.role,
+        branchId: req.user.branchId,
+      },
+    });
+
+    const result = await this.adminUsersService.create(
       {
         name: dto.name ?? null,
         email: dto.email,
@@ -62,6 +78,14 @@ export class AdminUsersController {
       },
       req.user,
     );
+
+    // eslint-disable-next-line no-console
+    console.log('[AdminUsersController.create] Returning response', {
+      userId: result.user.id,
+      hasTempPassword: !!result.tempPassword,
+    });
+
+    return result;
   }
 
   @Patch(':id')

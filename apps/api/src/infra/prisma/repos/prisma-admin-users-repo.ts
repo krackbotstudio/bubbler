@@ -77,6 +77,14 @@ export class PrismaAdminUsersRepo implements AdminUsersRepo {
     isActive: boolean;
     passwordHash?: string | null;
   }): Promise<AdminUserRecord> {
+    // eslint-disable-next-line no-console
+    console.log('[PrismaAdminUsersRepo.createAdminUser] Attempting to create user', {
+      email: input.email,
+      role: input.role,
+      branchId: input.branchId,
+      hasPasswordHash: !!input.passwordHash,
+    });
+
     try {
       const row = await this.prisma.user.create({
         data: {
@@ -89,8 +97,23 @@ export class PrismaAdminUsersRepo implements AdminUsersRepo {
           passwordHash: input.passwordHash ?? undefined,
         } as any,
       });
+
+      // eslint-disable-next-line no-console
+      console.log('[PrismaAdminUsersRepo.createAdminUser] User created in database', {
+        userId: row.id,
+        email: row.email,
+      });
+
       return toRecord(row as any);
     } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.error('[PrismaAdminUsersRepo.createAdminUser] Error creating user', {
+        error: e.message || e,
+        code: e.code,
+        meta: e.meta,
+        email: input.email,
+      });
+
       if (e && typeof e === 'object' && 'code' in e && e.code === 'P2002') {
         throw new AppError('UNIQUE_CONSTRAINT', 'Email already exists', {
           email: input.email,

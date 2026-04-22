@@ -71,32 +71,53 @@ export class AdminUsersService {
   }
 
   async create(input: CreateAdminUserInput, actor?: AuthUser) {
+    // eslint-disable-next-line no-console
+    console.log('[AdminUsersService.create] Starting user creation', {
+      email: input.email,
+      role: input.role,
+      branchId: input.branchId,
+      actorRole: actor?.role,
+      actorBranchId: actor?.branchId,
+    });
+
     if (actor?.role === Role.OPS) {
       if (input.role === Role.ADMIN || input.role === Role.BILLING) {
+        // eslint-disable-next-line no-console
+        console.warn('[AdminUsersService.create] FORBIDDEN: Branch head trying to create admin user');
         throw new AppError('FORBIDDEN', 'Branch heads cannot create platform admin users');
       }
       if (input.role !== Role.OPS && input.role !== Role.AGENT) {
+        // eslint-disable-next-line no-console
+        console.warn('[AdminUsersService.create] FEEDBACK_INVALID: Branch head trying to create invalid role', { role: input.role });
         throw new AppError('FEEDBACK_INVALID', 'Branch heads can only create Branch Head or Agent accounts');
       }
       const bid = actor.branchId;
       if (!bid || input.branchId !== bid) {
+        // eslint-disable-next-line no-console
+        console.warn('[AdminUsersService.create] BRANCH_REQUIRED: Branch mismatch', { actorBranchId: bid, inputBranchId: input.branchId });
         throw new AppError('BRANCH_REQUIRED', 'New staff must belong to your branch');
       }
       if (input.role === Role.OPS) {
         const n = await this.adminUsersRepo.countByBranchAndRole(bid, 'OPS');
         if (n >= 2) {
+          // eslint-disable-next-line no-console
+          console.warn('[AdminUsersService.create] QUOTA: Branch head limit reached', { branchId: bid, currentCount: n });
           throw new AppError('QUOTA', 'This branch already has the maximum of 2 branch head accounts');
         }
       }
       if (input.role === Role.AGENT) {
         const n = await this.adminUsersRepo.countByBranchAndRole(bid, 'AGENT');
         if (n >= 2) {
+          // eslint-disable-next-line no-console
+          console.warn('[AdminUsersService.create] QUOTA: Agent limit reached', { branchId: bid, currentCount: n });
           throw new AppError('QUOTA', 'This branch already has the maximum of 2 agent accounts');
         }
       }
     }
 
     if (!CREATABLE_STAFF_ROLES.includes(input.role)) {
+      // eslint-disable-next-line no-console
+      console.warn('[AdminUsersService.create] FEEDBACK_INVALID: Role not in creatable list', { role: input.role, validRoles: CREATABLE_STAFF_ROLES });
       throw new AppError(
         'FEEDBACK_INVALID',
         'Only Admin, Partial Admin, Branch Head, and Agent roles are allowed',
@@ -104,27 +125,39 @@ export class AdminUsersService {
     }
     if (actor?.role === Role.PARTIAL_ADMIN) {
       if (!canPartialAdminManageRole(input.role)) {
+        // eslint-disable-next-line no-console
+        console.warn('[AdminUsersService.create] FORBIDDEN: Partial admin trying to create invalid role', { role: input.role });
         throw new AppError('FORBIDDEN', 'Partial admin can create only Branch Head or Agent accounts');
       }
       const allowed = normalizeBranchIds(actor.branchIds);
       if (!input.branchId || !allowed.includes(input.branchId)) {
+        // eslint-disable-next-line no-console
+        console.warn('[AdminUsersService.create] BRANCH_REQUIRED: Branch not in allowed list', { branchId: input.branchId, allowedBranches: allowed });
         throw new AppError('BRANCH_REQUIRED', 'New staff must belong to one of your assigned branches');
       }
       input.branchIds = [];
     }
     input.branchIds = normalizeBranchIds(input.branchIds);
     if (input.role === PARTIAL_ADMIN_ROLE && (input.branchIds ?? []).length === 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[AdminUsersService.create] BRANCH_REQUIRED: Partial admin needs at least one branch');
       throw new AppError('BRANCH_REQUIRED', 'At least one branch is required for Partial Admin');
     }
     if (input.role !== PARTIAL_ADMIN_ROLE && (input.branchIds?.length ?? 0) > 0) {
       input.branchIds = [];
     }
     if (ROLES_REQUIRING_BRANCH.includes(input.role) && !input.branchId) {
+      // eslint-disable-next-line no-console
+      console.warn('[AdminUsersService.create] BRANCH_REQUIRED: Branch required for role', { role: input.role });
       throw new AppError('BRANCH_REQUIRED', 'Branch is required for Branch Head and Agent roles');
     }
     if (!ROLES_REQUIRING_BRANCH.includes(input.role)) {
       input.branchId = null;
     }
+
+    // eslint-disable-next-line no-console
+    console.log('[AdminUsersService.create] Validation passed, generating password and creating user');
+
     const tempPassword = generateTempPassword(12);
     const user = await createAdminUser(
       {
@@ -133,8 +166,11 @@ export class AdminUsersService {
       },
       this.deps,
     );
+
+    // eslint-disable-next-line no-console
+    console.log('[AdminUsersService.create] User created successfully', { userId: user.id, email: user.email });
+
     return { user, tempPassword };
-  }
 
   async update(input: UpdateAdminUserInput, currentUser: AuthUser) {
     const targetUser = await this.adminUsersRepo.getById(input.id);
