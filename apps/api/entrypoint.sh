@@ -30,29 +30,45 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
             echo "🔄 Running database migrations..."
             
             # Run migrations
-            if npx prisma migrate deploy --schema=src/infra/prisma/schema.prisma; then
-                echo "✅ Migrations completed successfully"
-            else
-                echo "⚠️  Migration failed, attempting to resolve known failed migrations..."
+            MIGRATION_ATTEMPTS=0
+            MAX_ATTEMPTS=5
+            
+            while [ $MIGRATION_ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+                MIGRATION_ATTEMPTS=$((MIGRATION_ATTEMPTS + 1))
+                echo "🔄 Migration attempt $MIGRATION_ATTEMPTS of $MAX_ATTEMPTS..."
                 
-                # Try to resolve the known failed migration
-                echo "🔄 Marking 20260211150000_backend_expansion as resolved..."
-                npx prisma migrate resolve --rolled-back "20260211150000_backend_expansion" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
-                npx prisma migrate resolve --applied "20260211150000_backend_expansion" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
-                
-                # Try running migrations again
-                echo "🔄 Retrying migrations..."
                 if npx prisma migrate deploy --schema=src/infra/prisma/schema.prisma; then
-                    echo "✅ Migrations completed after resolution"
+                    echo "✅ Migrations completed successfully"
+                    break
                 else
-                    echo "❌ Migrations still failed after resolution attempt!"
-                    echo "💡 You may need to manually resolve migration issues in your Supabase database."
-                    echo "💡 Run these commands in your container terminal:"
-                    echo "   npx prisma migrate resolve --rolled-back \"MIGRATION_NAME\" --schema=src/infra/prisma/schema.prisma"
-                    echo "   npx prisma migrate resolve --applied \"MIGRATION_NAME\" --schema=src/infra/prisma/schema.prisma"
-                    exit 1
+                    echo "⚠️  Migration failed on attempt $MIGRATION_ATTEMPTS, attempting to resolve..."
+                    
+                    # Try to resolve common failed migrations
+                    echo "🔄 Marking failed migrations as resolved..."
+                    npx prisma migrate resolve --rolled-back "20260211150000_backend_expansion" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --applied "20260211150000_backend_expansion" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --rolled-back "20260211160000_feedback" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --applied "20260211160000_feedback" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --rolled-back "20260213100000_add_segmented_pricing" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --applied "20260213100000_add_segmented_pricing" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --rolled-back "20260213120000_segment_category_table" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --applied "20260213120000_segment_category_table" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --rolled-back "20260213180000_add_branches" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    npx prisma migrate resolve --applied "20260213180000_add_branches" --schema=src/infra/prisma/schema.prisma 2>/dev/null || true
+                    
+                    if [ $MIGRATION_ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+                        echo "❌ Migrations still failed after $MAX_ATTEMPTS attempts!"
+                        echo "💡 You may need to manually resolve migration issues in your Supabase database."
+                        echo "💡 Check logs above for the specific failed migration name."
+                        echo "💡 Run these commands in your container terminal:"
+                        echo "   npx prisma migrate resolve --rolled-back \"MIGRATION_NAME\" --schema=src/infra/prisma/schema.prisma"
+                        echo "   npx prisma migrate resolve --applied \"MIGRATION_NAME\" --schema=src/infra/prisma/schema.prisma"
+                        exit 1
+                    fi
+                    
+                    echo "🔄 Retrying migrations..."
                 fi
-            fi
+            done
         else
             echo "⚠️  Prisma schema not found, skipping migrations"
         fi
