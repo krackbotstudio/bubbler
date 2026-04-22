@@ -7,7 +7,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY apps/admin-web/package.json ./package.json
-RUN npm install --ignore-scripts --omit=optional
+COPY package.json ./
+COPY scripts/ ./scripts/
+COPY apps/api/src/infra/prisma/ ./apps/api/src/infra/prisma/
+
+# Install dependencies (ignore postinstall to avoid Prisma issues in admin-web build)
+RUN npm ci --ignore-scripts --legacy-peer-deps
 
 COPY apps/admin-web/ ./
 RUN mkdir -p ./public
