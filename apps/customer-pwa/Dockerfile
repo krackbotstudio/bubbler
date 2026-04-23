@@ -14,8 +14,8 @@ COPY package.json package-lock.json ./
 COPY apps/customer-pwa/package.json ./apps/customer-pwa/
 COPY apps/customer-mobile/package.json ./apps/customer-mobile/
 
-# Install all dependencies
-RUN npm ci --legacy-peer-deps
+# Install all dependencies (skip postinstall - prisma not needed for PWA)
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 # Copy source code (customer-pwa needs customer-mobile for shared App)
 COPY apps/customer-pwa ./apps/customer-pwa
