@@ -267,14 +267,21 @@ export default function SignupPage() {
     }
     setLoading(true);
     try {
+      console.log('[Signup] Starting signup process...');
       let accessToken = devSupabaseAccessTokenRef.current;
       if (!accessToken) {
+        console.log('[Signup] No dev token, getting Supabase session...');
         const supabase = getSupabaseBrowserClient();
         const { data: sessionData, error: sErr } = await supabase.auth.getSession();
-        if (sErr) throw sErr;
+        if (sErr) {
+          console.error('[Signup] Supabase session error:', sErr);
+          throw sErr;
+        }
         accessToken = sessionData.session?.access_token ?? null;
+        console.log('[Signup] Access token retrieved:', !!accessToken);
       }
       if (!accessToken) {
+        console.error('[Signup] No access token available');
         throw new Error('Session expired. Go back and request a new code.');
       }
 
@@ -296,6 +303,7 @@ export default function SignupPage() {
       if (parsed.data.upiLink?.trim()) form.append('upiLink', parsed.data.upiLink.trim());
       if (branchLogoFile) form.append('branchLogo', branchLogoFile);
 
+      console.log('[Signup] Making API call to /auth/admin/signup/complete...');
       const { data } = await api.post<{
         token: string;
         user: { id: string; email: string; role: AuthUser['role']; branchId: string | null };
@@ -311,6 +319,7 @@ export default function SignupPage() {
         }
       }
 
+      console.log('[Signup] API call successful, storing token and user...');
       setToken(data.token);
       setStoredUser({
         id: data.user.id,
@@ -319,9 +328,12 @@ export default function SignupPage() {
         branchId: data.user.branchId,
         onboardingCompletedAt: data.onboardingCompletedAt ?? null,
       });
+      console.log('[Signup] Redirecting to /onboarding...');
       router.replace('/onboarding');
       router.refresh();
     } catch (err) {
+      console.error('[Signup] Error during signup:', err);
+      console.error('[Signup] Error details:', err instanceof Error ? err.message : JSON.stringify(err));
       setError(err);
     } finally {
       setLoading(false);
